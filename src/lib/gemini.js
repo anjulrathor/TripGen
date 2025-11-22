@@ -1,35 +1,36 @@
+// lib/gemini.js (FIXED)
+// NEVER call Gemini directly from frontend.
+// ALWAYS call your server route /api/generate.
+
 "use client";
 
 export async function askGemini(prompt) {
-  const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+  // Build minimal payload for server route
+  const payload = {
+    destination: { label: "Custom Prompt" },
+    days: 1,
+    budget: "moderate",
+    adventure: "solo",
+    notes: prompt,
+  };
 
-  if (!apiKey) {
-    throw new Error("Gemini API key missing");
+  // Call your backend API route safely
+  const res = await fetch("/api/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ payload }),
+  });
+
+  let json;
+  try {
+    json = await res.json();
+  } catch (e) {
+    throw new Error("Invalid response from server");
   }
 
-  const res = await fetch(
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + apiKey,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [{ text: prompt }]
-          }
-        ]
-      })
-    }
-  );
+  if (!res.ok) {
+    throw new Error(json?.error || "Failed to generate AI response");
+  }
 
-  const data = await res.json();
-
-  // Extract AI text safely
-  const aiText =
-    data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-    "No response from Gemini";
-
-  return aiText;
+  return json.aiResponse;
 }
