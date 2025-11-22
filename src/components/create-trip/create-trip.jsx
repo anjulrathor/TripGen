@@ -6,8 +6,7 @@ import AuthCheck from "../AuthCheck";
 import { saveTripForm } from "@/lib/saveTrip";
 import { generateTripAI } from "@/lib/generateTrip";
 import { useRouter } from "next/navigation";
-import Protected from "@/components/Protected";   // ⭐ ADDED
-
+import Protected from "@/components/Protected"; // ⭐ ADDED
 
 /**
  * TripGen — Premium Form (Protected)
@@ -96,7 +95,7 @@ function FreePlacesAutocomplete({ value = null, onChange = () => {}, placeholder
           ref={listRef}
           className="absolute z-50 w-full mt-2 bg-white rounded-xl shadow-xl border border-gray-100 max-h-60 overflow-auto"
         >
-          {results.map((r, i) => (
+          {results.map((r) => (
             <li
               key={r.value.place_id}
               onMouseDown={() => select(r)}
@@ -118,6 +117,7 @@ function Card({ children }) {
 function TogglePill({ label, value, active, onClick, subtitle }) {
   return (
     <button
+      type="button"
       onClick={() => onClick(value)}
       className={`flex-1 text-left px-4 py-3 rounded-lg transition border ${
         active ? "bg-gradient-to-r from-cyan-600 to-indigo-600 text-white shadow-lg" : "bg-white text-gray-700 border-gray-200 hover:shadow"
@@ -138,28 +138,69 @@ export default function CreateTripPage() {
   const [adventure, setAdventure] = useState("solo");
   const [notes, setNotes] = useState("");
 
+  const [isLoading, setIsLoading] = useState(false);
+
   // ⭐ Save + Generate + Redirect
   async function handleGenerate() {
-    const payload = {
-      destination: destinationPlace,
-      days: Number(days),
-      budget,
-      adventure,
-      notes,
-      createdAt: new Date().toISOString(),
-    };
+    if (isLoading) return; // prevent double submit
+    setIsLoading(true);
 
     try {
+      // Basic validation
+      if (!destinationPlace || !destinationPlace.label) {
+        alert("Please choose a destination from the list.");
+        setIsLoading(false);
+        return;
+      }
+
+      const daysNum = Number(days);
+      if (!daysNum || daysNum < 1) {
+        alert("Please enter a valid number of days (>= 1).");
+        setIsLoading(false);
+        return;
+      }
+
+      const payload = {
+        destination: destinationPlace,
+        days: daysNum,
+        budget,
+        adventure,
+        notes,
+        createdAt: new Date().toISOString(),
+      };
+
+      // 1) Save form (returns formId)
       const formId = await saveTripForm(payload);
+      if (!formId) {
+        throw new Error("Failed to save form");
+      }
       console.log("🔥 Saved form ID:", formId);
 
-      const result = await generateTripAI(payload);
-      console.log("🔥 AI Trip:", result.aiResponse);
+      // 2) Generate via AI helper (lib/generateTrip)
+      // This helper should call your server API (/api/generate) and return an object.
+      // We handle multiple possible shapes for safety.
+      const result = await generateTripAI({ formId, payload });
 
-      router.push(`/trip/${result.id}`);
+      // result might be:
+      // { id: "<generatedDocId>" }
+      // or { aiResponse: "...", id: "<id>" }
+      // or { aiResponse: "..." } where you want to open formId
+
+      console.log("🔥 AI Trip result:", result);
+
+      // best-effort determine destination id for redirect
+      const redirectId = result?.id || formId;
+
+      // optional: if generateTripAI returned aiResponse but did not store it,
+      // you might want to save it to Firestore inside generateTripAI helper.
+      // Here we just redirect to trip page.
+      router.push(`/trip/${redirectId}`);
     } catch (error) {
       console.error("Generation error:", error);
-      alert("Could not generate trip");
+      const message = error?.message || "Could not generate trip";
+      alert(message);
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -167,14 +208,12 @@ export default function CreateTripPage() {
     <Protected>
       <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-8">
         <div className="max-w-4xl mx-auto">
-
           <header className="mb-8">
             <h1 className="text-3xl font-extrabold text-gray-900">TripGen — Bespoke Trip Planner</h1>
           </header>
 
           <Card>
             <div className="grid grid-cols-1 gap-6">
-
               {/* Destination */}
               <div>
                 <label className="text-xs font-semibold text-gray-600">Destination</label>
@@ -191,7 +230,7 @@ export default function CreateTripPage() {
                     type="number"
                     min="1"
                     value={days}
-                    onChange={(e) => setDays(e.target.value)}
+                    onChange={(e) => setDays(Number(e.target.value || 0))}
                     className="mt-2 w-full px-4 py-3 rounded-lg border bg-white/60"
                   />
                 </div>
@@ -229,12 +268,15 @@ export default function CreateTripPage() {
 
               {/* Generate Button */}
               <button
+                type="button"
                 onClick={handleGenerate}
-                className="px-6 py-3 rounded-lg bg-gradient-to-r from-cyan-600 to-indigo-600 text-white font-semibold shadow-lg hover:opacity-95 transition"
+                disabled={isLoading}
+                className={`px-6 py-3 rounded-lg text-white font-semibold shadow-lg transition ${
+                  isLoading ? "bg-gray-400 cursor-not-allowed" : "bg-gradient-to-r from-cyan-600 to-indigo-600 hover:opacity-95"
+                }`}
               >
-                Generate Trip
+                {isLoading ? "Generating..." : "Generate Trip"}
               </button>
-
             </div>
           </Card>
 

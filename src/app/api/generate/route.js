@@ -2,12 +2,13 @@
 import { NextResponse } from "next/server";
 
 /**
- * TripGen AI Route
- * Uses Google Generative AI (Free-tier / Gemini API)
+ * TripGen AI Route (server-side)
  *
- * Make sure you have:
+ * Env:
  *  GEMINI_API_KEY=xxxx
- *  GEMINI_MODEL=gemini-1.5-flash-latest  (or any available model)
+ *  GEMINI_MODEL=gemini-1.5-flash   (recommended default)
+ *
+ * Client should POST to /api/generate with JSON: { formId?, payload: { destination, days, budget, adventure, notes } }
  */
 
 export async function POST(req) {
@@ -20,7 +21,7 @@ export async function POST(req) {
     }
 
     const key = process.env.GEMINI_API_KEY;
-    const model = process.env.GEMINI_MODEL || "gemini-1.5-flash-latest";
+    const model = process.env.GEMINI_MODEL || "gemini-1.5-flash";
 
     if (!key) {
       return NextResponse.json(
@@ -33,10 +34,10 @@ export async function POST(req) {
     const prompt = `Create a short, beautiful, and useful travel itinerary.
 
 Destination: ${payload.destination?.label || "Unknown"}
-Days: ${payload.days}
-Budget: ${payload.budget}
-Adventure type: ${payload.adventure}
-Notes: ${payload.notes}
+Days: ${payload.days ?? "N/A"}
+Budget: ${payload.budget ?? "N/A"}
+Adventure type: ${payload.adventure ?? "N/A"}
+Notes: ${payload.notes ?? ""}
 
 Include in output:
 - 1 paragraph introduction
@@ -46,21 +47,18 @@ Include in output:
 - No markdown, normal clean text only.
 `;
 
-    // FINAL Google Generative API endpoint
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
+    // Use v1 endpoint (not v1beta) and attach API key as query param
+    const endpoint = `https://generativelanguage.googleapis.com/v1/models/${encodeURIComponent(
       model
-    )}:generateContent`;
+    )}:generateContent?key=${encodeURIComponent(key)}`;
 
-    // --------------------------
-    // ✅ Correct request body format
-    // --------------------------
     const res = await fetch(endpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-goog-api-key": key,
       },
       body: JSON.stringify({
+        // This payload shape (contents -> parts -> text) matches the generative API v1 request shape.
         contents: [
           {
             parts: [{ text: prompt }],
@@ -69,32 +67,37 @@ Include in output:
       }),
     });
 
+    const text = await res.text(); // read as text first so we can show detailed errors if JSON parsing fails
     if (!res.ok) {
-      const errText = await res.text();
+      // Return upstream response body to help debugging
       return NextResponse.json(
         {
           error: `AI server responded with ${res.status}`,
-          details: errText,
+          details: text,
         },
         { status: 502 }
       );
     }
 
-    const data = await res.json();
+    // Parse JSON after successful status
+    const data = JSON.parse(text);
 
-    // --------------------------
-    // ✅ Correct response parsing
-    // --------------------------
+    // Best-effort extraction of the generated text (support a few possible shapes)
     const aiResponse =
       data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-      data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+      data?.candidates?.[0]?.content?.parts?.[0] ||
+      // some responses put text deeper/shallow
+      (Array.isArray(data?.candidates?.[0]?.content) &&
+        (data.candidates[0].content[0]?.parts?.[0]?.text ??
+          data.candidates[0].content[0]?.text)) ||
+      // fallback to entire JSON string so caller can inspect
       JSON.stringify(data);
 
-    return NextResponse.json({ aiResponse });
+    return NextResponse.json({ aiResponse, raw: data });
   } catch (err) {
     console.error("API /api/generate error:", err);
     return NextResponse.json(
-      { error: err?.message || "Server error" },
+      { error: err?.message || "Server error", stack: err?.stack },
       { status: 500 }
     );
   }
