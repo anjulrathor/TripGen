@@ -1,4 +1,4 @@
-import CreateTripPage from '@/components/create-trip/hero'
+import CreateTripPage from '@/components/create-trip/create-trip'
 import React from 'react'
 
 const page = () => {
