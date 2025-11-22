@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import GoogleLoginButton from "../GoogleLoginButton";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -62,13 +63,8 @@ export default function Navbar() {
 
           {/* Right: CTA + Hamburger */}
           <div className="flex items-center gap-4">
-            <a
-              href="#"
-              className="hidden sm:inline-flex items-center px-4 py-1 rounded-lg border border-cyan-400 text-cyan-300 text-sm font-medium hover:shadow-[0_0_12px_rgba(34,211,238,0.12)] transition"
-              aria-label="Login"
-            >
-              Login with Google
-            </a>
+            
+            <GoogleLoginButton />
 
             {/* Mobile hamburger */}
             <button

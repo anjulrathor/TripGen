@@ -1,25 +1,39 @@
+"use client";
 // pages/create-trip.jsx
-// Reference image (local path): sandbox:/mnt/data/df20aca1-fa52-4d3e-a3f0-8f8d40a18470.png
 
-'use client';
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import AuthCheck from "../AuthCheck";
+import { saveTripForm } from "@/lib/saveTrip";   // ⭐ Added Firestore save function
 
-/* -----------------------------------------
-   FREE AUTOCOMPLETE (NOMINATIM)
-   (minimal, logs selection with onChange)
------------------------------------------- */
-function FreePlacesAutocomplete({ onChange = () => {}, placeholder = "Search your destination…" }) {
-  const [query, setQuery] = useState("");
+/**
+ * TripGen — Premium Form
+ * - Free Nominatim autocomplete (no paid APIs)
+ * - Save only final selected place (full object)
+ * - Premium UI + Firestore-ready
+ */
+
+function FreePlacesAutocomplete({ value = null, onChange = () => {}, placeholder = "Search your destination…" }) {
+  const [query, setQuery] = useState(value?.label || "");
+  const [place, setPlace] = useState(null);
   const [results, setResults] = useState([]);
   const [open, setOpen] = useState(false);
+  const [focusedIndex, setFocusedIndex] = useState(-1);
+
   const controllerRef = useRef(null);
   const debounceRef = useRef(null);
   const inputRef = useRef(null);
+  const listRef = useRef(null);
+
+  useEffect(() => {
+    if (value && value.label) setQuery(value.label);
+  }, [value]);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (!query || query.length < 2) {
       setResults([]);
+      setOpen(false);
+      setFocusedIndex(-1);
       return;
     }
 
@@ -29,8 +43,9 @@ function FreePlacesAutocomplete({ onChange = () => {}, placeholder = "Search you
         controllerRef.current = new AbortController();
 
         const q = encodeURIComponent(query);
-        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${q}&limit=6`;
+        const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=0&q=${q}&limit=6`;
         const res = await fetch(url, { signal: controllerRef.current.signal, headers: { "Accept-Language": "en" } });
+
         const data = await res.json();
 
         const mapped = data.map((p) => ({
@@ -43,10 +58,12 @@ function FreePlacesAutocomplete({ onChange = () => {}, placeholder = "Search you
           },
         }));
 
+        console.log("autocomplete results:", mapped);
         setResults(mapped);
-        setOpen(true);
+        setOpen(Boolean(mapped.length));
+        setFocusedIndex(-1);
       } catch (err) {
-        if (err.name !== "AbortError") console.error("Nominatim fetch error:", err);
+        if (err.name !== "AbortError") console.error("Nominatim error", err);
       }
     }, 300);
 
@@ -55,248 +72,227 @@ function FreePlacesAutocomplete({ onChange = () => {}, placeholder = "Search you
     };
   }, [query]);
 
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+
+    function onKey(e) {
+      if (!results.length) return;
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setFocusedIndex((i) => Math.min(i + 1, results.length - 1));
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setFocusedIndex((i) => Math.max(i - 1, 0));
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        const idx = focusedIndex >= 0 ? focusedIndex : 0;
+        if (results[idx]) select(results[idx]);
+      } else if (e.key === "Escape") {
+        setOpen(false);
+      }
+    }
+
+    el.addEventListener("keydown", onKey);
+    return () => el.removeEventListener("keydown", onKey);
+  }, [results, focusedIndex]);
+
+  useEffect(() => {
+    if (listRef.current && focusedIndex >= 0) {
+      const node = listRef.current.children[focusedIndex];
+      if (node) node.scrollIntoView({ block: "nearest" });
+    }
+  }, [focusedIndex]);
+
   function select(item) {
+    console.log("selected object:", item);
+
     setQuery(item.label);
+    setPlace(item);
     setResults([]);
     setOpen(false);
+    setFocusedIndex(-1);
     onChange(item);
   }
 
   return (
-    <div className="relative">
-      <input
-        ref={inputRef}
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        onFocus={() => { if (results.length) setOpen(true); }}
-        placeholder={placeholder}
-        className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400"
-        aria-autocomplete="list"
-      />
+    <div className="relative w-full">
+      <div className="flex items-center gap-3 bg-white/60 backdrop-blur-sm border border-gray-200 rounded-xl px-4 py-3 shadow-sm">
+        <div className="text-2xl">📍</div>
+        <input
+          ref={inputRef}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onFocus={() => { if (results.length) setOpen(true); }}
+          placeholder={placeholder}
+          className="flex-1 bg-transparent outline-none text-sm font-medium placeholder-gray-500"
+        />
+        <button
+          onClick={() => { setQuery(""); setResults([]); setOpen(false); setFocusedIndex(-1); }}
+          aria-label="clear"
+          className="text-sm text-gray-400 hover:text-gray-600"
+        >
+          Clear
+        </button>
+      </div>
 
       {open && results.length > 0 && (
-        <div className="absolute z-40 mt-1 w-full bg-white border rounded-xl shadow-lg max-h-56 overflow-auto">
-          {results.map((r) => (
-            <div
+        <ul
+          id="places-listbox"
+          ref={listRef}
+          role="listbox"
+          className="absolute z-50 w-full mt-2 bg-white rounded-xl shadow-xl border border-gray-100 max-h-60 overflow-auto"
+        >
+          {results.map((r, i) => (
+            <li
               key={r.value.place_id}
-              onMouseDown={() => select(r)} /* onMouseDown prevents input blur before click */
-              className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+              role="option"
+              aria-selected={focusedIndex === i}
+              onMouseDown={(e) => { e.preventDefault(); select(r); }}
+              onMouseEnter={() => setFocusedIndex(i)}
+              className={`px-4 py-3 cursor-pointer transition flex flex-col gap-1 ${
+                focusedIndex === i ? "bg-cyan-50" : "hover:bg-gray-50"
+              }`}
             >
-              <div className="font-medium text-slate-900">{r.label}</div>
-            </div>
+              <div className="text-sm font-semibold text-gray-800 truncate">{r.label}</div>
+              <div className="text-xs text-gray-400">Place ID: {r.value.place_id}</div>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </div>
   );
 }
 
-/* -----------------------------------------
-   Single-page progressive form
-   Steps:
-     0 -> Destination (To)
-     1 -> Days + People
-     2 -> Budget + Budget cards
-     3 -> Traveler type cards + Create
------------------------------------------- */
+function Card({ children }) {
+  return <div className="bg-white/50 backdrop-blur rounded-2xl p-6 shadow-xl border border-gray-100">{children}</div>;
+}
+
+function TogglePill({ label, value, active, onClick, subtitle }) {
+  return (
+    <button
+      onClick={() => onClick(value)}
+      className={`flex-1 text-left px-4 py-3 rounded-lg transition border ${
+        active ? "bg-gradient-to-r from-cyan-600 to-indigo-600 text-white shadow-lg" : "bg-white text-gray-700 border-gray-200 hover:shadow"
+      }`}
+    >
+      <div className="font-semibold">{label}</div>
+      {subtitle && <div className="text-xs mt-1 opacity-80">{subtitle}</div>}
+    </button>
+  );
+}
+
 export default function CreateTripPage() {
-  const [step, setStep] = useState(0);
 
-  // Form state (kept minimal)
-  const [destination, setDestination] = useState(null); // object from autocomplete
-  const [days, setDays] = useState(2);
-  const [people, setPeople] = useState(1);
-  const [budget, setBudget] = useState(3000);
-  const [budgetLevel, setBudgetLevel] = useState("moderate"); // cheap | moderate | luxury
-  const [travelerType, setTravelerType] = useState("solo"); // solo | couple | friends | family
+  const [destinationPlace, setDestinationPlace] = useState(null);
+  const [days, setDays] = useState(4);
+  const [budget, setBudget] = useState("moderate");
+  const [adventure, setAdventure] = useState("solo");
+  const [notes, setNotes] = useState("");
 
-  // When user selects a place, only console.log (per request)
-  const handlePlaceSelect = (place) => {
-    setDestination(place); // keep in state for final payload but do NOT show it on UI
-    console.log("Selected place:", place);
-  };
-
-  // Move to next step (only if minimal validation passes)
-  const next = () => {
-    // simple validation: destination required for step 0
-    if (step === 0) {
-      if (!destination) {
-        // minimal feedback without showing selected on UI: shake input or console.warn
-        console.warn("Please choose a destination from suggestions before continuing.");
-        return;
-      }
-    }
-    setStep((s) => Math.min(s + 1, 3));
-  };
-
-  const back = () => setStep((s) => Math.max(s - 1, 0));
-
-  // Final create action -> console.log full payload
-  const handleCreate = () => {
+  async function handleGenerate() {
     const payload = {
-      destination,
-      days,
-      people,
+      destination: destinationPlace,
+      days: Number(days) || null,
       budget,
-      budgetLevel,
-      travelerType,
+      adventure,
+      notes,
+      createdAt: new Date().toISOString(),
     };
-    console.log("Create Itinerary clicked — payload:", payload);
-    // You can add mock generation or API call here later.
-    // For now keep minimal per your request.
-  };
 
-  // Minimal step indicator (small dots) — non-intrusive
-  function StepDots() {
-    return (
-      <div className="flex items-center gap-2 mt-6">
-        {[0,1,2,3].map((i) => (
-          <div key={i} className={`w-2 h-2 rounded-full ${i <= step ? "bg-cyan-600" : "bg-gray-300"}`}></div>
-        ))}
-      </div>
-    );
+    console.groupCollapsed("%cTripGen - Payload", "color:#0ea5a4;font-weight:bold;");
+    console.log(payload);
+    console.groupEnd();
+
+    try {
+      const id = await saveTripForm(payload);   // ⭐ Firestore save here
+      console.log("🔥 Saved Firestore doc:", id);
+      alert("Trip form saved!");
+    } catch (error) {
+      console.error("Save error:", error);
+      alert("Error saving trip");
+    }
   }
 
   return (
-    <section className="sm:px-10 md:px-14 lg:px-56 xl:px-72 px-5 mt-10">
-      <div>
-        <h2 className="font-bold text-3xl">Tell us where are you going?</h2>
-        <p className="mt-3 text-xl text-gray-500">
-          TripGen will make a simple day-by-day plan. Click Next to add more details.
-        </p>
-      </div>
+    <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-8">
+      <div className="max-w-4xl mx-auto">
 
-      <div className="mt-12 space-y-8">
-
-        {/* Step 0: Destination */}
-        <div className="border rounded-xl px-4 py-4">
-          <h3 className="text-lg font-medium mb-3">Destination</h3>
-          <FreePlacesAutocomplete
-            onChange={handlePlaceSelect}
-            placeholder="Search your destination…"
-          />
-          <div className="flex justify-end mt-3">
-            <button
-              onClick={next}
-              className="bg-gradient-to-br from-cyan-400 to-purple-500 px-4 py-2 rounded-2xl text-black font-medium"
-            >
-              Next
-            </button>
+        <header className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-extrabold text-gray-900">TripGen — Bespoke Trip Planner</h1>
+            <p className="mt-1 text-sm text-gray-600">Refined inputs, smart autocomplete, curated prompts.</p>
           </div>
-        </div>
+        </header>
 
-        {/* Step 1: Days + People (revealed after step >=1) */}
-        {step >= 1 && (
-          <div className="border rounded-xl px-4 py-4">
-            <h3 className="text-lg font-medium mb-3">Trip length & travelers</h3>
+        <Card>
+          <div className="grid grid-cols-1 gap-6">
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <label className="block">
-                <div className="text-sm font-medium">Days</div>
-                <input
-                  type="number"
-                  min="1"
-                  max="14"
-                  value={days}
-                  onChange={(e) => setDays(Number(e.target.value) || 1)}
-                  className="mt-2 w-full px-3 py-2 border rounded"
+            <div>
+              <label className="text-xs font-semibold text-gray-600">Destination</label>
+              <div className="mt-2">
+                <FreePlacesAutocomplete
+                  value={destinationPlace}
+                  onChange={(v) => setDestinationPlace(v)}
                 />
-              </label>
-
-              <label className="block">
-                <div className="text-sm font-medium">People</div>
-                <input
-                  type="number"
-                  min="1"
-                  max="20"
-                  value={people}
-                  onChange={(e) => setPeople(Number(e.target.value) || 1)}
-                  className="mt-2 w-full px-3 py-2 border rounded"
-                />
-              </label>
-            </div>
-
-            <div className="flex justify-between mt-4">
-              <button onClick={back} className="px-4 py-2 rounded-md border">Back</button>
-              <button onClick={next} className="px-4 py-2 rounded-2xl bg-gradient-to-br from-cyan-400 to-purple-500 text-black">Next</button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 2: Budget + Budget cards */}
-        {step >= 2 && (
-          <div className="border rounded-xl px-4 py-4">
-            <h3 className="text-lg font-medium mb-3">Budget</h3>
-
-            <label className="block">
-              <div className="text-sm font-medium">Budget (INR)</div>
-              <input
-                type="number"
-                min="0"
-                value={budget}
-                onChange={(e) => setBudget(Number(e.target.value) || 0)}
-                className="mt-2 w-full px-3 py-2 border rounded"
-              />
-            </label>
-
-            <div className="mt-3">
-              <div className="text-sm font-medium mb-2">Budget style</div>
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { key: "cheap", title: "Cheap" },
-                  { key: "moderate", title: "Moderate" },
-                  { key: "luxury", title: "Luxury" },
-                ].map((b) => (
-                  <button
-                    key={b.key}
-                    onClick={() => setBudgetLevel(b.key)}
-                    className={`text-left p-3 rounded-xl border transition ${budgetLevel === b.key ? "bg-cyan-500 text-white border-cyan-500" : "bg-white text-gray-700 border-gray-200 hover:shadow-sm"}`}
-                  >
-                    <div className="font-semibold">{b.title}</div>
-                    <div className="text-xs mt-1 text-gray-500">{b.key === "cheap" ? "Budget-friendly" : b.key === "moderate" ? "Comfortable" : "High-end"}</div>
-                  </button>
-                ))}
               </div>
             </div>
 
-            <div className="flex justify-between mt-4">
-              <button onClick={back} className="px-4 py-2 rounded-md border">Back</button>
-              <button onClick={next} className="px-4 py-2 rounded-2xl bg-gradient-to-br from-cyan-400 to-purple-500 text-black">Next</button>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="text-xs font-semibold text-gray-600">Days</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={days}
+                  onChange={(e) => setDays(e.target.value)}
+                  className="mt-2 w-full px-4 py-3 rounded-lg border bg-white/60"
+                />
+              </div>
+
+              <div className="col-span-2">
+                <label className="text-xs font-semibold text-gray-600">Budget</label>
+                <div className="mt-2 grid grid-cols-3 gap-3">
+                  <TogglePill label="Cheap" value="cheap" active={budget === "cheap"} onClick={setBudget} subtitle="Cost conscious" />
+                  <TogglePill label="Moderate" value="moderate" active={budget === "moderate"} onClick={setBudget} subtitle="Balanced comfort" />
+                  <TogglePill label="Luxury" value="luxury" active={budget === "luxury"} onClick={setBudget} subtitle="Best experiences" />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-gray-600">Adventure Type</label>
+              <div className="mt-3 grid grid-cols-4 gap-3">
+                <TogglePill label="Solo" value="solo" active={adventure === "solo"} onClick={setAdventure} subtitle="For yourself" />
+                <TogglePill label="Couple" value="couple" active={adventure === "couple"} onClick={setAdventure} subtitle="Romantic" />
+                <TogglePill label="Family" value="family" active={adventure === "family"} onClick={setAdventure} subtitle="Kids friendly" />
+                <TogglePill label="Friends" value="friends" active={adventure === "friends"} onClick={setAdventure} subtitle="Group fun" />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-gray-600">Notes (optional)</label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className="mt-2 w-full px-4 py-3 rounded-lg border bg-white/60 min-h-[80px] text-sm"
+                placeholder="Any special requests…"
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-4">
+              <button
+                onClick={handleGenerate}
+                className="px-6 py-3 rounded-lg bg-gradient-to-r from-cyan-600 to-indigo-600 text-white font-semibold shadow-lg hover:opacity-95 transition"
+              >
+                Generate Trip
+              </button>
             </div>
           </div>
-        )}
+        </Card>
 
-        {/* Step 3: Traveler type & Create */}
-        {step >= 3 && (
-          <div className="border rounded-xl px-4 py-4">
-            <h3 className="text-lg font-medium mb-3">Who are you traveling with?</h3>
-
-            <div className="grid grid-cols-4 gap-3">
-              {[
-                { key: "solo", label: "Solo" },
-                { key: "couple", label: "Couple" },
-                { key: "friends", label: "Friends" },
-                { key: "family", label: "Family" },
-              ].map((t) => (
-                <button
-                  key={t.key}
-                  onClick={() => setTravelerType(t.key)}
-                  className={`p-3 rounded-xl border text-center ${travelerType === t.key ? "bg-sky-600 text-white border-sky-600" : "bg-white text-gray-700 border-gray-200 hover:shadow-sm"}`}
-                >
-                  <div className="font-semibold">{t.label}</div>
-                </button>
-              ))}
-            </div>
-
-            <div className="flex justify-between mt-4">
-              <button onClick={back} className="px-4 py-2 rounded-md border">Back</button>
-              <button onClick={handleCreate} className="px-4 py-2 rounded-2xl bg-gradient-to-br from-cyan-400 to-purple-500 text-black">Create Itinerary</button>
-            </div>
-          </div>
-        )}
-
-        <StepDots />
+        <AuthCheck />
       </div>
-    </section>
+    </main>
   );
 }
