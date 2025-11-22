@@ -1,14 +1,15 @@
 // app/api/generate/route.js
 import { NextResponse } from "next/server";
 
+// Force Node.js runtime to see env logs clearly
+export const runtime = "nodejs";
+
 /**
  * TripGen AI Route (server-side)
  *
  * Env:
  *  GEMINI_API_KEY=xxxx
- *  GEMINI_MODEL=gemini-1.5-flash   (recommended default)
- *
- * Client should POST to /api/generate with JSON: { formId?, payload: { destination, days, budget, adventure, notes } }
+ *  GEMINI_MODEL=gemini-1.5-flash
  */
 
 export async function POST(req) {
@@ -20,10 +21,15 @@ export async function POST(req) {
       return NextResponse.json({ error: "Missing payload" }, { status: 400 });
     }
 
+    // 🔎 DEBUG LOGS — check env variables
+    console.log("🔑 API KEY LOADED:", process.env.GEMINI_API_KEY);
+    console.log("🔧 MODEL LOADED:", process.env.GEMINI_MODEL);
+
     const key = process.env.GEMINI_API_KEY;
     const model = process.env.GEMINI_MODEL || "gemini-1.5-flash";
 
     if (!key) {
+      console.log("❌ ERROR: GEMINI_API_KEY is missing in environment!");
       return NextResponse.json(
         { error: "Server not configured: missing GEMINI_API_KEY" },
         { status: 500 }
@@ -47,10 +53,12 @@ Include in output:
 - No markdown, normal clean text only.
 `;
 
-    // Use v1 endpoint (not v1beta) and attach API key as query param
+    // Google Generative API v1 endpoint
     const endpoint = `https://generativelanguage.googleapis.com/v1/models/${encodeURIComponent(
       model
     )}:generateContent?key=${encodeURIComponent(key)}`;
+
+    console.log("🌐 Calling Gemini API at:", endpoint);
 
     const res = await fetch(endpoint, {
       method: "POST",
@@ -58,7 +66,6 @@ Include in output:
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        // This payload shape (contents -> parts -> text) matches the generative API v1 request shape.
         contents: [
           {
             parts: [{ text: prompt }],
@@ -67,9 +74,10 @@ Include in output:
       }),
     });
 
-    const text = await res.text(); // read as text first so we can show detailed errors if JSON parsing fails
+    const text = await res.text();
+
     if (!res.ok) {
-      // Return upstream response body to help debugging
+      console.log("❌ Gemini API error:", text);
       return NextResponse.json(
         {
           error: `AI server responded with ${res.status}`,
@@ -79,21 +87,21 @@ Include in output:
       );
     }
 
-    // Parse JSON after successful status
     const data = JSON.parse(text);
 
-    // Best-effort extraction of the generated text (support a few possible shapes)
+    // Extract best possible response
     const aiResponse =
       data?.candidates?.[0]?.content?.parts?.[0]?.text ||
       data?.candidates?.[0]?.content?.parts?.[0] ||
-      // some responses put text deeper/shallow
       (Array.isArray(data?.candidates?.[0]?.content) &&
         (data.candidates[0].content[0]?.parts?.[0]?.text ??
           data.candidates[0].content[0]?.text)) ||
-      // fallback to entire JSON string so caller can inspect
       JSON.stringify(data);
 
+    console.log("✅ AI RESPONSE RECEIVED");
+
     return NextResponse.json({ aiResponse, raw: data });
+
   } catch (err) {
     console.error("API /api/generate error:", err);
     return NextResponse.json(
