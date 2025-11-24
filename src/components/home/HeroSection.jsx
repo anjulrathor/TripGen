@@ -9,7 +9,7 @@ const HeroSection = () => {
           {/* Left - Text */}
           <div>
             <h1 className="text-4xl md:text-5xl font-extrabold leading-tight text-slate-900">
-              Plan your trip in seconds.
+              Plan your trip in seconds with AI 
             </h1>
             <p className="mt-4 text-lg text-gray-600">
               TripGen creates simple, clean day-by-day itineraries. Just choose
