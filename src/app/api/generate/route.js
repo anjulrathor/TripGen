@@ -4,19 +4,7 @@ import { NextResponse } from "next/server";
 // Use Node runtime so server-side env logging works predictably
 export const runtime = "nodejs";
 
-/**
- * TripGen AI Route (server-side)
- *
- * Env required:
- *  GEMINI_API_KEY=xxxx
- *  GEMINI_MODEL=gemini-2.5-flash    (recommended default)
- *
- * Client should POST to /api/generate with JSON:
- * { formId?: string, payload: { destination, days, budget, adventure, notes } }
- *
- * Response:
- * { aiResponse: string, raw: object }
- */
+
 
 export async function POST(req) {
   try {
