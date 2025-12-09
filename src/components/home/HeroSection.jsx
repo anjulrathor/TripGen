@@ -6,7 +6,7 @@ const HeroSection = () => {
       {/* ===== HERO SECTION ===== */}
       <section className="max-w-6xl mx-auto px-6 py-20 md:py-28">
         <div className="grid md:grid-cols-2 gap-14 items-center">
-          {/* Left - Text */}
+          
           <div>
             <h1 className="text-4xl md:text-5xl font-extrabold leading-tight text-slate-900">
               Plan your trip in seconds with AI 
