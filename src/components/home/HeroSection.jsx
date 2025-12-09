@@ -15,7 +15,7 @@ const HeroSection = () => {
               TripGen creates simple, clean day-by-day itineraries. Just choose
               your trip type and start planning instantly.
             </p>
-
+{/* as */}
             <div className="mt-8 flex gap-4">
               <a
                 href="/create-trip"
