@@ -25,10 +25,10 @@ export default function Footer() {
               Your personal AI travel companion. We craft unique, human-centric itineraries that make every trip an unforgettable story.
             </p>
             <div className="flex gap-4">
-              {[Twitter, Instagram, Github, Linkedin].map((Icon, i) => (
+              {[Linkedin].map((Icon, i) => (
                 <a
                   key={i}
-                  href="#"
+                  href="https://www.linkedin.com/in/anjulrathor/"
                   className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all duration-300"
                 >
                   <Icon className="w-5 h-5" />
@@ -78,7 +78,7 @@ export default function Footer() {
                 </div>
                 <div className="text-left">
                   <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Email</p>
-                  <a href="mailto:hello@tripgen.com" className="text-foreground hover:text-primary transition-all">hello@tripgen.com</a>
+                  <a href="mailto:hello@anjulrathor.com" className="text-foreground hover:text-primary transition-all">hello@anjulrathor.com</a>
                 </div>
               </div>
               <div className="flex items-start gap-3 group">
@@ -87,7 +87,7 @@ export default function Footer() {
                 </div>
                 <div className="text-left">
                   <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Location</p>
-                  <p className="text-foreground">Global Headquarter</p>
+                  <p className="text-foreground">Noida , UP</p>
                 </div>
               </div>
             </div>
