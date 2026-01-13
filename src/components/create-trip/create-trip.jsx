@@ -303,12 +303,10 @@ export default function CreateTripPage() {
                   <label className="flex items-center gap-2 text-sm font-bold text-muted-foreground mb-4">
                     <Wallet className="w-4 h-4" /> Planned Budget
                   </label>
-                  <div className="grid grid-cols-1 gap-4">
-                    <div className="grid grid-cols-3 gap-3">
-                        <OptionCard icon={Wallet} label="Cheap" description="Budget friendly" active={budget === "cheap"} onClick={() => setBudget("cheap")} />
-                        <OptionCard icon={MapPin} label="Regular" description="Value for money" active={budget === "moderate"} onClick={() => setBudget("moderate")} />
-                        <OptionCard icon={Sparkles} label="Luxury" description="Premium feel" active={budget === "luxury"} onClick={() => setBudget("luxury")} />
-                    </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <OptionCard icon={Wallet} label="Cheap" description="Budget friendly" active={budget === "cheap"} onClick={() => setBudget("cheap")} />
+                      <OptionCard icon={MapPin} label="Regular" description="Value for money" active={budget === "moderate"} onClick={() => setBudget("moderate")} />
+                      <OptionCard icon={Sparkles} label="Luxury" description="Premium feel" active={budget === "luxury"} onClick={() => setBudget("luxury")} />
                   </div>
                 </div>
               </div>

@@ -113,6 +113,7 @@ export default function Navbar() {
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
                       className="absolute right-0 mt-3 w-56 bg-white dark:bg-neutral-900 border border-border rounded-2xl shadow-2xl p-2 z-[60] overflow-hidden"
                     >
+                      {/* ... menu content remains same ... */}
                       <div className="px-3 py-3 border-b border-border/50">
                         <p className="text-sm font-bold truncate">{user.displayName}</p>
                         <p className="text-xs text-muted-foreground truncate">{user.email}</p>
@@ -145,20 +146,12 @@ export default function Navbar() {
                   )}
                 </AnimatePresence>
               </div>
-            ) : (
-              <Link
-                href="/login"
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all text-sm"
-              >
-                <LogIn className="w-4 h-4" />
-                Sign In
-              </Link>
-            )}
+            ) : null}
 
-            {/* Mobile Toggle */}
+            {/* Mobile Toggle / Hamburger */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 rounded-xl bg-secondary/50 text-foreground hover:bg-primary/20 transition-all"
+              className="p-2.5 rounded-xl bg-secondary/80 dark:bg-neutral-800 text-foreground hover:bg-primary hover:text-primary-foreground transition-all duration-300 shadow-sm"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -170,13 +163,14 @@ export default function Navbar() {
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden mt-2 max-w-7xl mx-auto overflow-hidden"
+            initial={{ opacity: 0, scale: 0.95, y: -20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -20 }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="fixed inset-x-4 top-24 z-50 lg:hidden"
           >
-            <div className="bg-white/90 dark:bg-black/80 backdrop-blur-xl border border-border rounded-2xl p-4 shadow-xl">
-              <div className="flex flex-col gap-2">
+            <div className="bg-white/95 dark:bg-neutral-900/95 backdrop-blur-2xl border border-white/20 dark:border-white/10 rounded-3xl p-6 shadow-2xl shadow-black/20">
+              <div className="flex flex-col gap-1">
                 {navLinks.map((link) => {
                   if (link.protected && !user) return null;
                   return (
@@ -185,29 +179,43 @@ export default function Navbar() {
                       href={link.href}
                       target={link.external ? "_blank" : "_self"}
                       rel={link.external ? "noopener noreferrer" : ""}
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-primary/10 hover:text-primary transition-all"
+                      className="flex items-center gap-4 px-4 py-4 rounded-2xl text-base font-bold text-muted-foreground hover:bg-primary/10 hover:text-primary transition-all active:scale-95"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      {link.icon}
+                      <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                        {link.icon}
+                      </div>
                       {link.name}
                     </Link>
                   );
                 })}
+                
+                <div className="h-px bg-border/50 my-4" />
+
                 {!user ? (
                    <Link
                    href="/login"
-                   className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-primary hover:bg-primary/10 transition-all border border-primary/20 mt-2"
+                   className="flex items-center justify-center gap-3 w-full py-4 rounded-2xl bg-primary text-primary-foreground font-black shadow-lg shadow-primary/20"
                    onClick={() => setMobileMenuOpen(false)}
                  >
-                   <LogIn className="w-4 h-4" /> Sign In
+                   <LogIn className="w-5 h-5" /> Sign In Now
                  </Link>
                 ) : (
-                  <button
-                    onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 transition-all border border-red-100 mt-2"
-                  >
-                    <LogOut className="w-4 h-4" /> Sign Out
-                  </button>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 px-4 py-2 mb-2">
+                        <img src={user.photoURL} alt="avatar" className="w-10 h-10 rounded-full" />
+                        <div>
+                            <p className="text-sm font-black">{user.displayName}</p>
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Logged In</p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
+                        className="flex items-center justify-center gap-3 w-full py-4 rounded-2xl bg-red-500/10 text-red-500 font-black border border-red-500/20"
+                    >
+                        <LogOut className="w-5 h-5" /> Logout Session
+                    </button>
+                  </div>
                 )}
               </div>
             </div>

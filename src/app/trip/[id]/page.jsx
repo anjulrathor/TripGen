@@ -157,7 +157,7 @@ export default function TripPage() {
       <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background">
         
         {/* Hero Section */}
-        <section className="relative h-[400px] md:h-[500px] overflow-hidden">
+        <section className="relative h-[400px] md:h-[500px] lg:h-[600px] overflow-hidden">
              <img 
                  src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=1200&auto=format&fit=crop" 
                  className="w-full h-full object-cover"
@@ -170,46 +170,46 @@ export default function TripPage() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     onClick={() => router.back()}
-                    className="absolute top-28 left-6 w-12 h-12 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white hover:bg-white hover:text-black transition-all"
+                    className="absolute top-28 left-6 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white hover:bg-white hover:text-black transition-all"
                 >
-                    <ArrowLeft className="w-6 h-6" />
+                    <ArrowLeft className="w-5 h-5 md:w-6 md:h-6" />
                 </motion.button>
 
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex flex-col md:flex-row md:items-end justify-between gap-6"
+                    className="flex flex-col md:flex-row md:items-end justify-between gap-8 md:gap-6"
                 >
-                   <div>
+                   <div className="text-left">
                         <div className="flex items-center gap-2 mb-4">
                             <span className="px-4 py-1.5 rounded-full bg-primary text-primary-foreground font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20">
                                 AI Generated
                             </span>
                         </div>
-                        <h1 className="text-5xl md:text-7xl font-black text-foreground drop-shadow-sm mb-4">
+                        <h1 className="text-4xl sm:text-5xl md:text-7xl font-black text-foreground drop-shadow-sm mb-4 leading-none">
                             {destinationLabel.split(',')[0]}
                         </h1>
-                        <div className="flex flex-wrap gap-4">
-                            <div className="flex items-center gap-2 text-muted-foreground font-bold">
-                                <Calendar className="w-5 h-5 text-primary" /> {days} Days
+                        <div className="flex flex-wrap gap-x-6 gap-y-3">
+                            <div className="flex items-center gap-2 text-muted-foreground font-bold text-sm md:text-base">
+                                <Calendar className="w-4 h-4 md:w-5 md:h-5 text-primary" /> {days} Days
                             </div>
-                            <div className="flex items-center gap-2 text-muted-foreground font-bold">
-                                <Wallet className="w-5 h-5 text-primary" /> {budget}
+                            <div className="flex items-center gap-2 text-muted-foreground font-bold text-sm md:text-base">
+                                <Wallet className="w-4 h-4 md:w-5 md:h-5 text-primary" /> {budget}
                             </div>
-                            <div className="flex items-center gap-2 text-muted-foreground font-bold">
-                                <Users className="w-5 h-5 text-primary" /> {adventure}
+                            <div className="flex items-center gap-2 text-muted-foreground font-bold text-sm md:text-base">
+                                <Users className="w-4 h-4 md:w-5 md:h-5 text-primary" /> {adventure}
                             </div>
                         </div>
                    </div>
 
-                   <div className="flex gap-3">
-                        <button onClick={handleNativeShare} className="w-14 h-14 rounded-2xl bg-white dark:bg-neutral-800 border border-border flex items-center justify-center text-foreground hover:border-primary hover:text-primary transition-all shadow-xl">
+                   <div className="flex gap-3 w-full md:w-auto">
+                        <button onClick={handleNativeShare} className="flex-1 md:w-14 md:h-14 h-14 rounded-2xl bg-white dark:bg-neutral-800 border border-border flex items-center justify-center text-foreground hover:border-primary hover:text-primary transition-all shadow-xl">
                             <Share2 className="w-6 h-6" />
                         </button>
-                        <button onClick={handleWhatsApp} className="w-14 h-14 rounded-2xl bg-[#25D366] text-white flex items-center justify-center hover:scale-105 transition-all shadow-xl">
+                        <button onClick={handleWhatsApp} className="flex-1 md:w-14 md:h-14 h-14 rounded-2xl bg-[#25D366] text-white flex items-center justify-center hover:scale-105 transition-all shadow-xl">
                             <Send className="w-6 h-6" />
                         </button>
-                        <button onClick={handleCopyLink} className="relative group w-14 h-14 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center hover:scale-105 transition-all shadow-xl">
+                        <button onClick={handleCopyLink} className="flex-1 md:w-14 md:h-14 h-14 relative group rounded-2xl bg-primary text-primary-foreground flex items-center justify-center hover:scale-105 transition-all shadow-xl">
                             {copied ? <Check className="w-6 h-6" /> : <Copy className="w-6 h-6" />}
                             {copied && <span className="absolute -top-12 left-1/2 -translate-x-1/2 px-3 py-1 bg-black text-white text-xs rounded-md">Copied!</span>}
                         </button>

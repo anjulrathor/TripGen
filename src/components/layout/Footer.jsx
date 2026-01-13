@@ -9,10 +9,10 @@ export default function Footer() {
   return (
     <footer className="bg-white dark:bg-neutral-950 border-t border-border mt-20">
       <div className="max-w-7xl mx-auto px-6 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 text-center sm:text-left">
           
           {/* Brand Column */}
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col items-center sm:items-start gap-6">
             <Link href="/" className="flex items-center gap-2 group">
               <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 transition-transform group-hover:rotate-12">
                 <Plane className="w-6 h-6 text-primary-foreground fill-current" />
@@ -38,9 +38,9 @@ export default function Footer() {
           </div>
 
           {/* Product Links */}
-          <div>
+          <div className="flex flex-col items-center sm:items-start">
             <h3 className="text-foreground font-bold mb-6 flex items-center gap-2">
-              <div className="w-1 h-4 bg-primary rounded-full"></div>
+              <div className="w-1 h-4 bg-primary rounded-full hidden sm:block"></div>
               Product
             </h3>
             <ul className="space-y-4">
@@ -52,9 +52,9 @@ export default function Footer() {
           </div>
 
           {/* Support Links */}
-          <div>
+          <div className="flex flex-col items-center sm:items-start">
             <h3 className="text-foreground font-bold mb-6 flex items-center gap-2">
-              <div className="w-1 h-4 bg-primary rounded-full"></div>
+              <div className="w-1 h-4 bg-primary rounded-full hidden sm:block"></div>
               Resources
             </h3>
             <ul className="space-y-4">
@@ -66,17 +66,17 @@ export default function Footer() {
           </div>
 
           {/* Contact Column */}
-          <div>
+          <div className="flex flex-col items-center sm:items-start">
             <h3 className="text-foreground font-bold mb-6 flex items-center gap-2">
-              <div className="w-1 h-4 bg-primary rounded-full"></div>
+              <div className="w-1 h-4 bg-primary rounded-full hidden sm:block"></div>
               Get in Touch
             </h3>
-            <div className="space-y-4">
+            <div className="space-y-4 flex flex-col items-center sm:items-start">
               <div className="flex items-start gap-3 group">
                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
                   <Mail className="w-4 h-4" />
                 </div>
-                <div>
+                <div className="text-left">
                   <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Email</p>
                   <a href="mailto:hello@tripgen.com" className="text-foreground hover:text-primary transition-all">hello@tripgen.com</a>
                 </div>
@@ -85,7 +85,7 @@ export default function Footer() {
                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
                   <MapPin className="w-4 h-4" />
                 </div>
-                <div>
+                <div className="text-left">
                   <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Location</p>
                   <p className="text-foreground">Global Headquarter</p>
                 </div>
@@ -95,9 +95,9 @@ export default function Footer() {
         </div>
 
         {/* Bottom Section */}
-        <div className="mt-16 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
+        <div className="mt-16 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-6 text-center text-sm text-muted-foreground">
           <p>© {currentYear} TripGen. Built with ❤️ for travelers by <a href="https://www.anjulrathor.com" target="_blank" className="font-bold text-foreground hover:text-primary transition-colors">Anjul</a>.</p>
-          <div className="flex gap-8">
+          <div className="flex flex-wrap justify-center gap-6 md:gap-8">
             <Link href="/about" className="hover:text-primary transition-colors">Privacy</Link>
             <Link href="/about" className="hover:text-primary transition-colors">Terms</Link>
             <Link href="/about" className="hover:text-primary transition-colors">Cookies</Link>

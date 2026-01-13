@@ -80,7 +80,7 @@ export default function MyTripsPage() {
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary-foreground text-xs font-bold uppercase mb-4">
                 <Archive className="w-3 h-3" /> Your Travel Vault
               </div>
-              <h1 className="text-4xl md:text-5xl font-black text-foreground">My <span className="text-primary italic">Journeys</span></h1>
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-foreground">My <span className="text-primary italic">Journeys</span></h1>
               <p className="text-muted-foreground mt-2">Revisit your AI-crafted adventures and keep them forever.</p>
             </div>
 

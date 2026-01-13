@@ -18,25 +18,26 @@ export default function AboutPage() {
       <div className="max-w-7xl mx-auto">
         
         {/* Hero Section */}
-        <div className="grid lg:grid-cols-2 gap-16 items-center mb-24">
+        <div className="grid lg:grid-cols-2 gap-12 sm:gap-16 items-center mb-24">
             <motion.div 
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
+                className="text-center lg:text-left"
             >
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary-foreground text-xs font-bold uppercase mb-6">
                     <Rocket className="w-3 h-3" /> Our Mission
                 </div>
-                <h1 className="text-5xl md:text-7xl font-black text-foreground mb-8 leading-tight">
-                    We're Redefining <br />
+                <h1 className="text-4xl sm:text-5xl md:text-7xl font-black text-foreground mb-8 leading-tight">
+                    We're Redefining <br className="hidden sm:block" />
                     <span className="text-primary italic">How You Travel.</span>
                 </h1>
-                <p className="text-xl text-muted-foreground leading-relaxed mb-10 max-w-xl">
+                <p className="text-lg md:text-xl text-muted-foreground leading-relaxed mb-10 max-w-xl mx-auto lg:mx-0">
                     TripGen was born from a simple idea: travel planning should be as exciting as the trip itself. We combine cutting-edge AI with a human touch to create itineraries that breathe.
                 </p>
-                <div className="grid grid-cols-2 gap-8">
+                <div className="grid grid-cols-2 gap-6 sm:gap-8 max-w-sm mx-auto lg:mx-0">
                     {stats.map((stat, i) => (
                         <div key={i}>
-                            <h3 className="text-4xl font-black text-foreground">{stat.value}</h3>
+                            <h3 className="text-3xl md:text-4xl font-black text-foreground">{stat.value}</h3>
                             <p className="text-muted-foreground font-bold mt-1 uppercase tracking-wider text-[10px]">{stat.label}</p>
                         </div>
                     ))}
@@ -46,11 +47,11 @@ export default function AboutPage() {
             <motion.div 
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="relative h-[500px] rounded-[3rem] overflow-hidden shadow-2xl grayscale hover:grayscale-0 transition-all duration-700"
+                className="relative h-[400px] md:h-[500px] rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-2xl grayscale hover:grayscale-0 transition-all duration-700 mx-auto w-full lg:w-auto"
             >
                 <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1200&auto=format&fit=crop" className="w-full h-full object-cover" alt="Our Team" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-12">
-                     <p className="text-white text-xl font-bold italic">"Travel is the only thing you buy that makes you richer."</p>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-8 md:p-12">
+                     <p className="text-white text-lg md:text-xl font-bold italic">"Travel is the only thing you buy that makes you richer."</p>
                 </div>
             </motion.div>
         </div>

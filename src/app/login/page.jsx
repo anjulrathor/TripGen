@@ -101,7 +101,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <h2 className="text-3xl md:text-5xl font-black text-foreground mb-4 tracking-tight">
+          <h2 className="text-4xl md:text-5xl font-black text-foreground mb-4 tracking-tight">
             Welcome Back!
           </h2>
           <p className="text-muted-foreground mb-12 font-medium">

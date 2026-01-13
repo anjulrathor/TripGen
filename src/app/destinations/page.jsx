@@ -55,8 +55,8 @@ export default function DestinationsPage() {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary-foreground text-xs font-bold uppercase mb-4">
             <Compass className="w-3 h-3" /> Explore the World
           </div>
-          <h1 className="text-5xl md:text-7xl font-black text-foreground mb-4">Trending <span className="text-primary italic">Destinations</span></h1>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-black text-foreground mb-4">Trending <span className="text-primary italic">Destinations</span></h1>
+          <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto">
             Hand-picked escapes curated by our AI engine and the global traveler community.
           </p>
         </div>
