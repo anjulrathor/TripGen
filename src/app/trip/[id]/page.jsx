@@ -4,22 +4,14 @@ import { db, auth } from "@/firebase/firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { convertToHTML } from "@/lib/formatTripHtml";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Protected from "@/components/Protected";
-import Shimmer from "@/components/Shimmer";
-import { useParams } from "next/navigation";
-
-/**
- * Trip page — shows generated trip stored in Firestore at:
- * users/{uid}/generatedTrips/{id}
- *
- * This version is resilient to small differences in how data was saved:
- * - destination can be { label } or a string stored in payload
- * - aiResponse may be in trip.aiResponse or nested in trip.raw.candidates...
- */
+import { useParams, useRouter } from "next/navigation";
+import { Plane, Calendar, Wallet, Users, Share2, Copy, Send, ArrowLeft, Download, MapPin, Star, Clock, Info, Check } from "lucide-react";
 
 export default function TripPage() {
   const params = useParams();
+  const router = useRouter();
   const id = params?.id || null;
 
   const [trip, setTrip] = useState(null);
@@ -60,15 +52,10 @@ export default function TripPage() {
     return () => {
       mounted = false;
     };
-  }, [id]);
+  }, [id, auth.currentUser]);
 
-  // Helpers to safely read values from the stored document
   function getDestinationLabel(t) {
     if (!t) return null;
-    // common shapes:
-    // t.destination = { label: "Goa", ... }
-    // t.payload = { destination: { label: "Goa" } } (if you stored payload)
-    // t.destination = "Goa" (string)
     return (
       t.destination?.label ||
       (typeof t.destination === "string" ? t.destination : null) ||
@@ -78,71 +65,42 @@ export default function TripPage() {
     );
   }
 
-  function getDays(t) {
-    return t?.days ?? t?.payload?.days ?? null;
-  }
+  function getDays(t) { return t?.days ?? t?.payload?.days ?? "-"; }
+  function getBudget(t) { return t?.budget ?? t?.payload?.budget ?? "-"; }
+  function getAdventure(t) { return t?.adventure ?? t?.payload?.adventure ?? "-"; }
 
-  function getBudget(t) {
-    return t?.budget ?? t?.payload?.budget ?? null;
-  }
-
-  function getAdventure(t) {
-    return t?.adventure ?? t?.payload?.adventure ?? null;
-  }
-
-  // Best-effort to extract AI text from a few possible shapes
   function getAiResponse(t) {
     if (!t) return null;
-
-    // 1) direct
     if (typeof t.aiResponse === "string" && t.aiResponse.trim().length > 0) return t.aiResponse;
-
-    // 2) stored inside payload
     if (typeof t.payload?.aiResponse === "string" && t.payload.aiResponse.trim().length > 0)
       return t.payload.aiResponse;
-
-    // 3) raw shape from Gemini (candidates -> content -> parts -> text)
     const raw = t.raw || t.aiRaw || t.rawResponse;
     if (raw) {
       try {
         const cand = raw?.candidates?.[0];
-        const text =
-          cand?.content?.parts?.[0]?.text ||
-          (Array.isArray(cand?.content) && cand.content[0]?.parts?.[0]?.text) ||
-          cand?.content?.parts?.[0] ||
-          null;
+        const text = cand?.content?.parts?.[0]?.text || (Array.isArray(cand?.content) && cand.content[0]?.parts?.[0]?.text) || cand?.content?.parts?.[0] || null;
         if (typeof text === "string" && text.trim().length > 0) return text;
-      } catch (e) {
-        // ignore parse errors
-      }
+      } catch (e) {}
     }
-
-    // 4) some code saved the whole raw JSON string in a field
-    if (typeof t.ai === "string" && t.ai.trim().length > 0) return t.ai;
-
     return null;
   }
 
   const destinationLabel = getDestinationLabel(trip) || "your destination";
-  const days = getDays(trip) ?? "-";
-  const budget = getBudget(trip) ?? "-";
-  const adventure = getAdventure(trip) ?? "-";
+  const days = getDays(trip);
+  const budget = getBudget(trip);
+  const adventure = getAdventure(trip);
   const aiText = getAiResponse(trip);
-
   const pageUrl = typeof window !== "undefined" ? window.location.href : "";
 
   async function handleNativeShare() {
-    if (!trip) return;
     if (navigator.share) {
       try {
         await navigator.share({
           title: `Trip to ${destinationLabel}`,
-          text: `Check out this trip — ${days} days, ${budget}.`,
+          text: `Check out my AI-generated trip: ${days} days in ${destinationLabel}!`,
           url: pageUrl,
         });
-      } catch (err) {
-        console.error("Share failed", err);
-      }
+      } catch (err) {}
     } else {
       handleCopyLink();
     }
@@ -153,38 +111,21 @@ export default function TripPage() {
       await navigator.clipboard.writeText(pageUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error("Copy failed", err);
-    }
+    } catch (err) {}
   }
 
   function handleWhatsApp() {
-    if (!trip) return;
     const text = encodeURIComponent(`Check out this trip to ${destinationLabel} — ${pageUrl}`);
-    const wa = `https://api.whatsapp.com/send?text=${text}`;
-    window.open(wa, "_blank");
+    window.open(`https://api.whatsapp.com/send?text=${text}`, "_blank");
   }
 
   if (loading) {
     return (
       <Protected>
-        <div className="min-h-screen flex items-center justify-center p-6">
-          <div className="w-full max-w-3xl">
-            <div className="rounded-2xl p-6 bg-white/70 backdrop-blur border border-gray-200 shadow-xl">
-              <div className="flex gap-4 items-center">
-                <Shimmer className="w-14 h-14 rounded-md" />
-                <div className="flex-1 space-y-3">
-                  <Shimmer className="h-5 w-1/2 rounded-md" />
-                  <Shimmer className="h-4 w-1/4 rounded-md" />
-                </div>
-              </div>
-
-              <div className="mt-6 grid gap-4">
-                <Shimmer className="h-6 w-32 rounded-md" />
-                <Shimmer className="h-48 rounded-xl" />
-              </div>
-            </div>
-          </div>
+        <div className="min-h-screen pt-32 pb-20 px-6 max-w-4xl mx-auto space-y-8 animate-pulse">
+            <div className="h-64 bg-secondary rounded-[2.5rem]"></div>
+            <div className="h-10 w-1/2 bg-secondary rounded-xl"></div>
+            <div className="h-96 bg-secondary rounded-[2.5rem]"></div>
         </div>
       </Protected>
     );
@@ -193,10 +134,16 @@ export default function TripPage() {
   if (!trip) {
     return (
       <Protected>
-        <div className="min-h-screen flex items-center justify-center p-6">
-          <div className="text-center">
-            <h2 className="text-xl font-semibold">Trip not found</h2>
-            <p className="text-sm text-gray-500 mt-2">This trip may have been removed or is not accessible.</p>
+        <div className="min-h-screen flex items-center justify-center p-6 bg-background">
+          <div className="text-center max-w-sm">
+            <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6 text-red-500">
+                <Info className="w-10 h-10" />
+            </div>
+            <h2 className="text-2xl font-black text-foreground mb-4">Itinerary vanished!</h2>
+            <p className="text-muted-foreground mb-8">This trip may have been removed or you don't have permission to view it.</p>
+            <button onClick={() => router.push('/my-trips')} className="px-8 py-3 bg-primary text-primary-foreground font-bold rounded-xl shadow-lg shadow-primary/20">
+                Go to My Trips
+            </button>
           </div>
         </div>
       </Protected>
@@ -207,31 +154,104 @@ export default function TripPage() {
 
   return (
     <Protected>
-      <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6">
-        <div className="max-w-3xl mx-auto">
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="mb-6">
-            <h1 className="text-3xl font-extrabold text-gray-900">Trip to {destinationLabel}</h1>
-            <p className="text-gray-600 mt-1">{days} days · {budget} · {adventure}</p>
-          </motion.div>
+      <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background">
+        
+        {/* Hero Section */}
+        <section className="relative h-[400px] md:h-[500px] overflow-hidden">
+             <img 
+                 src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=1200&auto=format&fit=crop" 
+                 className="w-full h-full object-cover"
+                 alt={destinationLabel}
+             />
+             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent"></div>
+             
+             <div className="absolute inset-0 flex flex-col justify-end max-w-5xl mx-auto px-6 pb-12">
+                <motion.button 
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    onClick={() => router.back()}
+                    className="absolute top-28 left-6 w-12 h-12 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white hover:bg-white hover:text-black transition-all"
+                >
+                    <ArrowLeft className="w-6 h-6" />
+                </motion.button>
 
-          <div className="flex items-center gap-3 mb-4">
-            <button onClick={handleNativeShare} className="px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm shadow hover:bg-indigo-700">
-              Share
-            </button>
+                <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex flex-col md:flex-row md:items-end justify-between gap-6"
+                >
+                   <div>
+                        <div className="flex items-center gap-2 mb-4">
+                            <span className="px-4 py-1.5 rounded-full bg-primary text-primary-foreground font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20">
+                                AI Generated
+                            </span>
+                        </div>
+                        <h1 className="text-5xl md:text-7xl font-black text-foreground drop-shadow-sm mb-4">
+                            {destinationLabel.split(',')[0]}
+                        </h1>
+                        <div className="flex flex-wrap gap-4">
+                            <div className="flex items-center gap-2 text-muted-foreground font-bold">
+                                <Calendar className="w-5 h-5 text-primary" /> {days} Days
+                            </div>
+                            <div className="flex items-center gap-2 text-muted-foreground font-bold">
+                                <Wallet className="w-5 h-5 text-primary" /> {budget}
+                            </div>
+                            <div className="flex items-center gap-2 text-muted-foreground font-bold">
+                                <Users className="w-5 h-5 text-primary" /> {adventure}
+                            </div>
+                        </div>
+                   </div>
 
-            <button onClick={handleCopyLink} className="px-3 py-2 rounded-lg bg-gray-100 text-sm hover:bg-gray-200">
-              {copied ? "Copied!" : "Copy link"}
-            </button>
+                   <div className="flex gap-3">
+                        <button onClick={handleNativeShare} className="w-14 h-14 rounded-2xl bg-white dark:bg-neutral-800 border border-border flex items-center justify-center text-foreground hover:border-primary hover:text-primary transition-all shadow-xl">
+                            <Share2 className="w-6 h-6" />
+                        </button>
+                        <button onClick={handleWhatsApp} className="w-14 h-14 rounded-2xl bg-[#25D366] text-white flex items-center justify-center hover:scale-105 transition-all shadow-xl">
+                            <Send className="w-6 h-6" />
+                        </button>
+                        <button onClick={handleCopyLink} className="relative group w-14 h-14 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center hover:scale-105 transition-all shadow-xl">
+                            {copied ? <Check className="w-6 h-6" /> : <Copy className="w-6 h-6" />}
+                            {copied && <span className="absolute -top-12 left-1/2 -translate-x-1/2 px-3 py-1 bg-black text-white text-xs rounded-md">Copied!</span>}
+                        </button>
+                   </div>
+                </motion.div>
+             </div>
+        </section>
 
-            <button onClick={handleWhatsApp} className="px-3 py-2 rounded-lg bg-green-600 text-white text-sm hover:bg-green-700">
-              WhatsApp
-            </button>
-          </div>
+        {/* Itinerary Content */}
+        <section className="max-w-5xl mx-auto px-6 py-12 pb-32">
+            <div className="grid lg:grid-cols-3 gap-12">
+                <div className="lg:col-span-2 space-y-8">
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.2 }}
+                        className="bg-white dark:bg-neutral-900 rounded-[2.5rem] p-8 md:p-12 border border-border shadow-sm"
+                    >
+                        <div 
+                           className="itinerary-content prose prose-stone lg:prose-xl max-w-none dark:prose-invert" 
+                           dangerouslySetInnerHTML={{ __html: html }} 
+                        />
+                    </motion.div>
+                </div>
 
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }} className="bg-white/70 backdrop-blur-xl border border-gray-200 shadow-xl rounded-2xl p-6">
-            <div className="prose prose-gray max-w-none" dangerouslySetInnerHTML={{ __html: html }} />
-          </motion.div>
-        </div>
+                <aside className="space-y-8">
+                    <div className="bg-primary/5 border border-primary/20 rounded-[2rem] p-8">
+                        <h3 className="text-xl font-black mb-4 flex items-center gap-2">
+                             <Star className="w-5 h-5 text-primary fill-current" /> AI Highlights
+                        </h3>
+                        <ul className="space-y-4">
+                            {["Bespoke daily flow", "Local hidden gems", "Optimized routes"].map((item, i) => (
+                                <li key={i} className="flex items-start gap-4 text-sm font-medium text-muted-foreground">
+                                    <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                                    {item}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </aside>
+            </div>
+        </section>
       </main>
     </Protected>
   );

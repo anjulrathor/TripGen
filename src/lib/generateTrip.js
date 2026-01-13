@@ -73,7 +73,7 @@ export async function generateTripAI(form) {
   const prompt = buildTripPrompt(normalizedForm);
 
   // 2) Ask Gemini (may throw)
-  const aiResponse = await askGemini(prompt);
+  const aiResponse = await askGemini(prompt, normalizedForm);
 
   // 3) Save generated trip to Firestore (save sanitized object)
   const ref = collection(db, `users/${user.uid}/generatedTrips`);

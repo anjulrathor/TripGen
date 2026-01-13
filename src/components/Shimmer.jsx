@@ -2,15 +2,13 @@
 import React from "react";
 
 /**
- * Simple reusable shimmer skeleton
- * Usage: <Shimmer className="h-40 w-full rounded-lg" />
+ * Premium reusable shimmer skeleton
+ * Consistent with the new #ace456 theme
  */
 export default function Shimmer({ className = "" }) {
   return (
-    <div className={`animate-pulse bg-gray-100 ${className}`}>
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-60"></div>
-      </div>
+    <div className={`relative overflow-hidden bg-secondary/80 dark:bg-neutral-800 ${className}`}>
+      <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent"></div>
     </div>
   );
 }

@@ -1,57 +1,62 @@
 // app/api/generate/route.js
 import { NextResponse } from "next/server";
 
-// Use Node runtime so server-side env logging works predictably
 export const runtime = "nodejs";
-
-
 
 export async function POST(req) {
   try {
     const body = await req.json().catch(() => null);
-    const { formId, payload } = body || {};
+    const { payload } = body || {};
 
     if (!payload) {
       return NextResponse.json({ error: "Missing payload" }, { status: 400 });
     }
 
-    // Safe env checks (do NOT print full key)
     const key = process.env.GEMINI_API_KEY;
-    const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+    // Defaulting to gemini-1.5-flash as it's the most stable widely available model
+    const model = process.env.GEMINI_MODEL || "gemini-1.5-flash";
 
-    console.log("🔎 generate route invoked; keyLoaded:", !!key, "model:", model);
+    console.log("🚀 AI Generation Triggered | Model:", model);
 
     if (!key) {
-      console.log("❌ GEMINI_API_KEY missing in server environment");
       return NextResponse.json(
-        { error: "Server not configured: missing GEMINI_API_KEY" },
+        { error: "Configuration Error: GEMINI_API_KEY is missing." },
         { status: 500 }
       );
     }
 
-    // Build the user-facing prompt (keep short & clear)
-    const prompt = `Create a short, beautiful, and useful travel itinerary.
+    const prompt = `
+      Act as a world-class travel planner. Create a highly detailed and engaging travel itinerary based on the following:
+      
+      DESTINATION: ${payload.destination?.label || "Beautiful Destination"}
+      DURATION: ${payload.days || 3} Days
+      BUDGET: ${payload.budget || "Moderate"}
+      TRAVEL STYLE: ${payload.adventure || "Standard"}
+      ADDITIONAL NOTES: ${payload.notes || "None"}
 
-Destination: ${payload.destination?.label || "Unknown"}
-Days: ${payload.days ?? "N/A"}
-Budget: ${payload.budget ?? "N/A"}
-Adventure type: ${payload.adventure ?? "N/A"}
-Notes: ${payload.notes ?? ""}
+      STRICT OUTPUT FORMAT:
+      1. One poetic intro paragraph about the destination.
+      2. Clear daily breakdown using '## Day X' format.
+      3. For each day, include:
+         - A morning exploration
+         - A local lunch spot type
+         - An afternoon activity
+         - A scenic evening experience
+      4. A 'Top Recommendations' section with:
+         - 3 specific neighborhoods to stay in.
+         - 5 must-try local delicacies.
+         - 3 transport tips.
+      5. A brief conclusion.
 
-Include in output:
-- 1 paragraph introduction
-- A day-by-day itinerary
-- 3 hotel recommendations (no images required)
-- Top 5 things to do
-- No markdown, normal clean text only.
-`;
+      STYLE GUIDE:
+      - Use clean Markdown.
+      - Be descriptive but concise.
+      - Focus on human experiences, not just checklists.
+    `;
 
-    // Use v1 endpoint with API key attached as query param (server-side only)
-    const endpoint = `https://generativelanguage.googleapis.com/v1/models/${encodeURIComponent(
-      model
-    )}:generateContent?key=${encodeURIComponent(key)}`;
+    // Using v1beta for maximum model compatibility (supports 1.5-pro, 1.5-flash, 2.0-flash experimental)
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
 
-    // POST to Google Generative API
     const upstream = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -61,53 +66,40 @@ Include in output:
             parts: [{ text: prompt }],
           },
         ],
+        generationConfig: {
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 2048,
+        }
       }),
     });
 
-    const upstreamText = await upstream.text();
+    const responseData = await upstream.json();
 
     if (!upstream.ok) {
-      // Return upstream error details to the client for debugging
-      console.error("Gemini upstream error:", upstream.status, upstreamText);
+      console.error("❌ Gemini API Error:", responseData);
       return NextResponse.json(
-        {
-          error: `AI server responded with ${upstream.status}`,
-          details: upstreamText,
+        { 
+          error: responseData.error?.message || "AI Model reported an error.", 
+          code: responseData.error?.code 
         },
-        { status: 502 }
+        { status: upstream.status }
       );
     }
 
-    // Parse JSON from upstream
-    let data;
-    try {
-      data = JSON.parse(upstreamText);
-    } catch (parseErr) {
-      console.error("Failed to parse AI response JSON:", parseErr);
-      return NextResponse.json(
-        { error: "Failed to parse AI response", details: upstreamText },
-        { status: 502 }
-      );
+    const aiResponse = responseData.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!aiResponse) {
+      return NextResponse.json({ error: "Empty response from AI." }, { status: 502 });
     }
 
-    // Best-effort extraction of the text from potential response shapes
-    const aiResponse =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-      data?.candidates?.[0]?.content?.parts?.[0] ||
-      (Array.isArray(data?.candidates?.[0]?.content) &&
-        (data.candidates[0].content[0]?.parts?.[0]?.text ??
-          data.candidates[0].content[0]?.text)) ||
-      // fallback: stringify the whole parsed object
-      JSON.stringify(data);
+    return NextResponse.json({ aiResponse });
 
-    console.log("✅ Generated AI response (length):", String(aiResponse).length);
-
-    // Return to client; client is responsible for saving to Firestore (or you can extend server to save)
-    return NextResponse.json({ aiResponse, raw: data });
   } catch (err) {
-    console.error("API /api/generate exception:", err);
+    console.error("💥 Critical Failure in /api/generate:", err);
     return NextResponse.json(
-      { error: err?.message || "Server error", stack: err?.stack },
+      { error: "Internal Server Error. Please try again later." },
       { status: 500 }
     );
   }

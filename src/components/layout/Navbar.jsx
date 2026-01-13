@@ -4,19 +4,26 @@ import GoogleLoginButton from "../GoogleLoginButton";
 import Link from "next/link";
 import { auth } from "@/firebase/firebaseConfig";
 import { signOut } from "firebase/auth";
+import { motion, AnimatePresence } from "framer-motion";
+import { Menu, X, ChevronDown, User, LogOut, Plane, Map, Plus, ExternalLink, Globe, Info, LogIn } from "lucide-react";
 
 export default function Navbar() {
-  const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const [user, setUser] = useState(null);
-  const [menuOpen, setMenuOpen] = useState(false); // ⭐ avatar dropdown
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
   useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
     const unsub = auth.onAuthStateChanged((u) => setUser(u));
-    return () => unsub();
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      unsub();
+    };
   }, []);
 
-  // ⭐ Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(e) {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -32,148 +39,181 @@ export default function Navbar() {
     setMenuOpen(false);
   }
 
+  const navLinks = [
+    { name: "Home", href: "/", icon: <Plane className="w-4 h-4" /> },
+    { name: "Destinations", href: "/destinations", icon: <Globe className="w-4 h-4" /> },
+    { name: "Create Trip", href: "/create-trip", icon: <Plus className="w-4 h-4" />, protected: true },
+    { name: "My Journeys", href: "/my-trips", icon: <Map className="w-4 h-4" />, protected: true },
+    { name: "About Us", href: "/about", icon: <Info className="w-4 h-4" /> },
+    { name: "Meet the Developer", href: "https://www.anjulrathor.com", icon: <ExternalLink className="w-4 h-4" />, external: true },
+  ];
+
   return (
-    <header className="bg-black border-b border-white/10">
-      <nav className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="h-16 flex items-center justify-between">
-          
-          {/* Left: Logo */}
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-md bg-gradient-to-br from-cyan-400 to-purple-500 flex items-center justify-center shadow-sm overflow-hidden">
-              {/* <img
-                src="sandbox:/mnt/data/c0f56289-230f-401f-a74e-14bba8928f0a.png"
-                alt="logo"
-                className="w-full h-full object-cover"
-              /> */}
+    <nav
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled ? "py-3 px-4" : "py-5 px-6"
+      }`}
+    >
+      <div
+        className={`max-w-7xl mx-auto rounded-2xl transition-all duration-300 ${
+          scrolled
+            ? "bg-white/80 dark:bg-black/60 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-lg shadow-black/5"
+            : "bg-transparent"
+        }`}
+      >
+        <div className="h-14 flex items-center justify-between px-6">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2 group">
+            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 group-hover:rotate-12 transition-transform duration-300">
+              <Plane className="w-6 h-6 text-primary-foreground fill-current" />
             </div>
-            <span className="bg-linear-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent font-extrabold text-lg tracking-tight">
-              TRIPGEN
+            <span className="font-bold text-xl tracking-tight text-foreground">
+              Trip<span className="text-primary">Gen</span>
             </span>
           </Link>
 
           {/* Desktop Links */}
-          <div className="hidden md:flex items-center gap-8">
-            <Link href="/" className="text-gray-400 hover:text-white transition">Home</Link>
-
-            {user && (
-              <>
-                <Link href="/create-trip" className="text-gray-400 hover:text-white transition">Create Trip</Link>
-                <Link href="/my-trips" className="text-gray-400 hover:text-white transition">My Trips</Link>
-              </>
-            )}
-
-            <Link href="/developer" className="text-gray-400 hover:text-white transition">
-              Meet the Developer
-            </Link>
+          <div className="hidden lg:flex items-center gap-1">
+            {navLinks.map((link) => {
+              if (link.protected && !user) return null;
+              return (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  target={link.external ? "_blank" : "_self"}
+                  rel={link.external ? "noopener noreferrer" : ""}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-all duration-200"
+                >
+                  {link.icon}
+                  {link.name}
+                </Link>
+              );
+            })}
           </div>
 
-          {/* Right side */}
-          <div className="flex items-center gap-4">
-
-            {/* ⭐ User avatar OR Google Login */}
+          {/* Right Section */}
+          <div className="flex items-center gap-3">
             {user ? (
               <div className="relative" ref={menuRef}>
                 <button
                   onClick={() => setMenuOpen((v) => !v)}
-                  className="w-10 h-10 rounded-full overflow-hidden border border-white/10 hover:ring-2 hover:ring-cyan-400 transition"
+                  className="flex items-center gap-2 p-1 pl-3 rounded-full border border-border bg-white dark:bg-black/40 hover:border-primary/50 transition-all"
                 >
-                  <img
-                    src={user.photoURL}
-                    alt="avatar"
-                    className="w-full h-full object-cover"
-                  />
+                  <span className="text-xs font-medium hidden sm:block">{user.displayName?.split(" ")[0]}</span>
+                  <div className="w-8 h-8 rounded-full overflow-hidden ring-2 ring-transparent group-hover:ring-primary/20 transition-all">
+                    <img src={user.photoURL} alt="avatar" className="w-full h-full object-cover" />
+                  </div>
                 </button>
 
-                {/* ⭐ Avatar Dropdown */}
-                {menuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-black/95 border border-white/10 rounded-lg shadow-xl p-2 z-50">
-                    <div className="px-3 py-2 border-b border-white/10">
-                      <p className="text-white text-sm font-semibold truncate">{user.displayName}</p>
-                      <p className="text-gray-400 text-xs truncate">{user.email}</p>
-                    </div>
-
-                    <Link
-                      href="/create-trip"
-                      className="block px-3 py-2 text-sm text-gray-300 hover:bg-white/10 rounded-md"
-                      onClick={() => setMenuOpen(false)}
+                <AnimatePresence>
+                  {menuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute right-0 mt-3 w-56 bg-white dark:bg-neutral-900 border border-border rounded-2xl shadow-2xl p-2 z-[60] overflow-hidden"
                     >
-                      Create Trip
-                    </Link>
-
-                    <Link
-                      href="/my-trips"
-                      className="block px-3 py-2 text-sm text-gray-300 hover:bg-white/10 rounded-md"
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      My Trips
-                    </Link>
-
-                    <button
-                      onClick={handleLogout}
-                      className="block w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-md"
-                    >
-                      Logout
-                    </button>
-                  </div>
-                )}
+                      <div className="px-3 py-3 border-b border-border/50">
+                        <p className="text-sm font-bold truncate">{user.displayName}</p>
+                        <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                      </div>
+                      <div className="py-1">
+                        <Link
+                          href="/create-trip"
+                          className="flex items-center gap-3 px-3 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary-foreground rounded-xl transition-all"
+                          onClick={() => setMenuOpen(false)}
+                        >
+                          <Plus className="w-4 h-4" /> Create Trip
+                        </Link>
+                        <Link
+                          href="/my-trips"
+                          className="flex items-center gap-3 px-3 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary-foreground rounded-xl transition-all"
+                          onClick={() => setMenuOpen(false)}
+                        >
+                          <Map className="w-4 h-4" /> My Trips
+                        </Link>
+                      </div>
+                      <div className="pt-1 border-t border-border/50">
+                        <button
+                          onClick={handleLogout}
+                          className="flex items-center gap-3 w-full text-left px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                        >
+                          <LogOut className="w-4 h-4" /> Logout
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             ) : (
-              <GoogleLoginButton />
+              <Link
+                href="/login"
+                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all text-sm"
+              >
+                <LogIn className="w-4 h-4" />
+                Sign In
+              </Link>
             )}
 
-            {/* Mobile hamburger */}
+            {/* Mobile Toggle */}
             <button
-              onClick={() => setOpen(!open)}
-              className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-300 hover:text-white hover:bg-white/3 transition"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 rounded-xl bg-secondary/50 text-foreground hover:bg-primary/20 transition-all"
             >
-              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
-                {open ? (
-                  <path d="M6 18L18 6M6 6l12 12" stroke="currentColor" strokeWidth="2" />
-                ) : (
-                  <path
-                    d="M3 7h18M3 12h18M3 17h18"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  />
-                )}
-              </svg>
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
-      </nav>
-
-      {/* Mobile menu */}
-      <div
-        className={`md:hidden transition-all duration-200 ${
-          open ? "max-h-screen opacity-100" : "max-h-0 opacity-0 pointer-events-none"
-        }`}
-      >
-        <div className="px-4 pt-4 pb-6 border-t border-white/5 bg-black/95">
-          <div className="flex flex-col gap-4">
-
-            <Link href="/" className="text-gray-300 hover:text-white transition">Home</Link>
-
-            {user ? (
-              <>
-                <Link href="/create-trip" className="text-gray-300 hover:text-white transition">Create Trip</Link>
-                <Link href="/my-trips" className="text-gray-300 hover:text-white transition">My Trips</Link>
-                <button
-                  onClick={handleLogout}
-                  className="text-left text-red-400 hover:text-red-300 transition"
-                >
-                  Logout
-                </button>
-              </>
-            ) : (
-              <>
-                <GoogleLoginButton />
-              </>
-            )}
-
-            <Link href="/developer" className="text-gray-300 hover:text-white transition">Meet the Developer</Link>
-          </div>
-        </div>
       </div>
-    </header>
+
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="lg:hidden mt-2 max-w-7xl mx-auto overflow-hidden"
+          >
+            <div className="bg-white/90 dark:bg-black/80 backdrop-blur-xl border border-border rounded-2xl p-4 shadow-xl">
+              <div className="flex flex-col gap-2">
+                {navLinks.map((link) => {
+                  if (link.protected && !user) return null;
+                  return (
+                    <Link
+                      key={link.name}
+                      href={link.href}
+                      target={link.external ? "_blank" : "_self"}
+                      rel={link.external ? "noopener noreferrer" : ""}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-primary/10 hover:text-primary transition-all"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      {link.icon}
+                      {link.name}
+                    </Link>
+                  );
+                })}
+                {!user ? (
+                   <Link
+                   href="/login"
+                   className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-primary hover:bg-primary/10 transition-all border border-primary/20 mt-2"
+                   onClick={() => setMobileMenuOpen(false)}
+                 >
+                   <LogIn className="w-4 h-4" /> Sign In
+                 </Link>
+                ) : (
+                  <button
+                    onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 transition-all border border-red-100 mt-2"
+                  >
+                    <LogOut className="w-4 h-4" /> Sign Out
+                  </button>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </nav>
   );
 }

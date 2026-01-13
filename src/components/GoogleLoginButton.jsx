@@ -8,24 +8,28 @@ import {
   signOut,
   onAuthStateChanged,
 } from "firebase/auth";
+import { LogIn, LogOut, Loader2 } from "lucide-react";
 
 export default function GoogleAuthButton() {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  // Listen for login/logout status
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser); // null if logged out
+      setUser(currentUser);
     });
     return () => unsubscribe();
   }, []);
 
   async function login() {
+    setLoading(true);
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
     } catch (err) {
       console.error("Login Error:", err);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -37,46 +41,55 @@ export default function GoogleAuthButton() {
     }
   }
 
-  // If logged in → show user card
   if (user) {
     return (
-      <div className="flex items-center gap-3 p-2 rounded-xl border shadow-sm bg-white">
+      <div className="flex items-center gap-3 p-1.5 pl-3 rounded-2xl border border-border bg-white dark:bg-neutral-900 shadow-sm">
+        <div className="flex flex-col">
+            <span className="text-[10px] uppercase tracking-tighter font-black text-muted-foreground leading-none">Logged in as</span>
+            <span className="text-xs font-bold text-foreground">
+              {user.displayName?.split(" ")[0] || "User"}
+            </span>
+        </div>
         <img
           src={user.photoURL}
           alt="profile"
-          className="w-8 h-8 rounded-full border"
+          className="w-8 h-8 rounded-full ring-2 ring-primary/20"
         />
-        <span className="text-sm font-medium">
-          {user.displayName?.split(" ")[0] || "User"}
-        </span>
 
         <button
           onClick={logout}
-          className="ml-auto px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 rounded-lg"
+          className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-50/50 rounded-xl transition-all"
+          title="Logout"
         >
-          Logout
+          <LogOut className="w-4 h-4" />
         </button>
       </div>
     );
   }
 
-  // Before login → show Google button
- return (
-  <button
-    onClick={login}
-    className="flex items-center gap-3 px-5 py-3 bg-white border rounded-xl shadow-sm hover:bg-gray-50 transition"
-  >
-    <img
-      src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-      alt="Google Logo"
-      className="w-5 h-5"
-    />
+  return (
+    <button
+      onClick={login}
+      disabled={loading}
+      className="group relative flex items-center gap-3 px-6 py-3 bg-white dark:bg-neutral-900 border border-border rounded-2xl shadow-lg shadow-black/5 hover:border-primary/50 hover:shadow-primary/10 transition-all active:scale-95 disabled:opacity-50"
+    >
+      {loading ? (
+        <Loader2 className="w-5 h-5 animate-spin text-primary" />
+      ) : (
+        <img
+          src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+          alt="Google Logo"
+          className="w-5 h-5 group-hover:scale-110 transition-transform"
+        />
+      )}
 
-    <span className="text-sm font-medium text-gray-700">
-      Sign in with Google
-    </span>
-  </button>
-);
-
-
+      <span className="text-sm font-bold text-foreground">
+        {loading ? "Connecting..." : "Continue with Google"}
+      </span>
+      
+      {!loading && (
+        <div className="absolute inset-0 rounded-2xl bg-primary/0 group-hover:bg-primary/5 transition-colors"></div>
+      )}
+    </button>
+  );
 }
