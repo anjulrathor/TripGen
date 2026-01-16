@@ -50,6 +50,9 @@ export async function POST(req) {
 
       STYLE GUIDE:
       - Use clean Markdown.
+      - Use '##' for main sections (Day X, Top Recommendations, Conclusion).
+      - Use '###' for subsections if needed.
+      - Use bullet points for lists.
       - Be descriptive but concise.
       - Focus on human experiences, not just checklists.
     `;
@@ -70,7 +73,7 @@ export async function POST(req) {
           temperature: 0.7,
           topK: 40,
           topP: 0.95,
-          maxOutputTokens: 2048,
+          maxOutputTokens: 8192,
         }
       }),
     });

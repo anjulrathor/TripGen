@@ -122,7 +122,8 @@ export default function MyTripsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               <AnimatePresence mode="popLayout">
                 {filteredTrips.map((trip, index) => {
-                  const excerpt = (trip.aiResponse || "").slice(0, 100).replace(/\n+/g, " ") + (trip.aiResponse?.length > 100 ? "..." : "");
+                  const rawText = (trip.aiResponse || "").replace(/[#*`]/g, "");
+                  const excerpt = rawText.slice(0, 100).replace(/\s+/g, " ").trim() + (rawText.length > 100 ? "..." : "");
                   const created = trip.createdAt?.toDate ? trip.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "Recently";
                   
                   return (

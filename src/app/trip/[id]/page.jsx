@@ -22,18 +22,15 @@ export default function TripPage() {
     if (!id) return;
 
     let mounted = true;
-    async function loadTrip() {
-      setLoading(true);
-      const user = auth.currentUser;
+
+    async function fetchTrip(user) {
       if (!user) {
         setLoading(false);
         return;
       }
-
       try {
         const ref = doc(db, `users/${user.uid}/generatedTrips/${id}`);
         const snap = await getDoc(ref);
-
         if (!mounted) return;
         if (snap.exists()) {
           setTrip(snap.data());
@@ -48,11 +45,15 @@ export default function TripPage() {
       }
     }
 
-    loadTrip();
+    const unsub = auth.onAuthStateChanged((user) => {
+      fetchTrip(user);
+    });
+
     return () => {
       mounted = false;
+      unsub();
     };
-  }, [id, auth.currentUser]);
+  }, [id]);
 
   function getDestinationLabel(t) {
     if (!t) return null;
@@ -229,7 +230,7 @@ export default function TripPage() {
                         className="bg-white dark:bg-neutral-900 rounded-[2.5rem] p-8 md:p-12 border border-border shadow-sm"
                     >
                         <div 
-                           className="itinerary-content prose prose-stone lg:prose-xl max-w-none dark:prose-invert" 
+                           className="itinerary-content" 
                            dangerouslySetInnerHTML={{ __html: html }} 
                         />
                     </motion.div>

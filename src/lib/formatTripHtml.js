@@ -1,31 +1,94 @@
 export function convertToHTML(text) {
   if (!text) return "";
 
-  let html = text;
+  // Split into lines for more robust processing
+  const lines = text.split(/\r?\n/);
+  let html = "";
+  let inList = false;
+  let listType = null; // 'ul' or 'ol'
 
-  // Convert ### headings
-  html = html.replace(/^### (.*)$/gm, `<h3 class="text-xl font-bold mt-6 mb-2 text-gray-800">$1</h3>`);
+  const closeList = () => {
+    if (inList) {
+      html += `</${listType}>`;
+      inList = false;
+      listType = null;
+    }
+  };
 
-  // Convert ## headings
-  html = html.replace(/^## (.*)$/gm, `<h2 class="text-2xl font-bold mt-8 mb-3 text-gray-900">$1</h2>`);
+  for (let line of lines) {
+    line = line.trim();
 
-  // Convert # headings
-  html = html.replace(/^# (.*)$/gm, `<h1 class="text-3xl font-bold mt-10 mb-5 text-gray-900">$1</h1>`);
+    // Headers
+    if (line.startsWith("### ")) {
+      closeList();
+      html += `<h3 class="text-xl font-bold mt-8 mb-4 text-foreground flex items-center gap-2">
+        <span class="w-1.5 h-6 bg-primary rounded-full"></span>
+        ${line.slice(4)}
+      </h3>`;
+      continue;
+    }
+    if (line.startsWith("## ")) {
+      closeList();
+      html += `<h2 class="text-2xl font-black mt-10 mb-6 text-foreground border-b border-border pb-2">
+        ${line.slice(3)}
+      </h2>`;
+      continue;
+    }
+    if (line.startsWith("# ")) {
+      closeList();
+      html += `<h1 class="text-3xl font-black mt-12 mb-8 text-primary">
+        ${line.slice(2)}
+      </h1>`;
+      continue;
+    }
 
-  // Convert bold **text**
-  html = html.replace(/\*\*(.*?)\*\*/g, `<b class="font-semibold text-gray-900">$1</b>`);
+    // Unordered Lists
+    if (line.startsWith("- ") || line.startsWith("* ")) {
+      if (!inList || listType !== "ul") {
+        closeList();
+        html += `<ul class="space-y-3 my-4">`;
+        inList = true;
+        listType = "ul";
+      }
+      const content = line.slice(2).replace(/\*\*(.*?)\*\*/g, `<b class="font-bold text-foreground">$1</b>`);
+      html += `<li class="flex items-start gap-3 text-muted-foreground leading-relaxed">
+        <span class="mt-2 w-1.5 h-1.5 rounded-full bg-primary shrink-0"></span>
+        <span>${content}</span>
+      </li>`;
+      continue;
+    }
 
-  // Convert bullet points
-  html = html.replace(/^- (.*)$/gm, `<li class="list-disc ml-5 text-gray-700">$1</li>`);
+    // Numbered Lists
+    const numMatch = line.match(/^(\d+)\. (.*)$/);
+    if (numMatch) {
+      if (!inList || listType !== "ol") {
+        closeList();
+        html += `<ol class="space-y-3 my-4 list-none counter-reset-item">`;
+        inList = true;
+        listType = "ol";
+      }
+      const content = numMatch[2].replace(/\*\*(.*?)\*\*/g, `<b class="font-bold text-foreground">$1</b>`);
+      html += `<li class="flex items-start gap-3 text-muted-foreground leading-relaxed">
+        <span class="flex items-center justify-center w-6 h-6 rounded-full bg-secondary text-primary text-[10px] font-black shrink-0 mt-0.5">
+          ${numMatch[1]}
+        </span>
+        <span>${content}</span>
+      </li>`;
+      continue;
+    }
 
-  // Convert numbered lists
-  html = html.replace(/^\d+\. (.*)$/gm, `<li class="list-decimal ml-5 text-gray-700">$1</li>`);
+    // Empty lines
+    if (line === "") {
+      closeList();
+      continue;
+    }
 
-  // Wrap list <li> inside <ul> automatically (simple)
-  html = html.replace(/(<li.*<\/li>)/gm, `<ul class="my-2">$1</ul>`);
+    // Regular paragraphs
+    closeList();
+    const content = line.replace(/\*\*(.*?)\*\*/g, `<b class="font-bold text-foreground">$1</b>`);
+    html += `<p class="text-muted-foreground leading-relaxed mb-4">${content}</p>`;
+  }
 
-  // Convert line breaks to <p>
-  html = html.replace(/(?:\r\n|\r|\n)/g, `<br/>`);
-
+  closeList();
   return html;
 }
