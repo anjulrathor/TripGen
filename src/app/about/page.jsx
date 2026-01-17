@@ -49,7 +49,7 @@ export default function AboutPage() {
                 animate={{ opacity: 1, scale: 1 }}
                 className="relative h-[400px] md:h-[500px] rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-2xl grayscale hover:grayscale-0 transition-all duration-700 mx-auto w-full lg:w-auto"
             >
-                <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1200&auto=format&fit=crop" className="w-full h-full object-cover" alt="Our Team" />
+                <img src="https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg" className="w-full h-full object-cover" alt="Our Team" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-8 md:p-12">
                      <p className="text-white text-lg md:text-xl font-bold italic">"Travel is the only thing you buy that makes you richer."</p>
                 </div>

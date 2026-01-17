@@ -160,7 +160,7 @@ export default function TripPage() {
         {/* Hero Section */}
         <section className="relative h-[400px] md:h-[500px] lg:h-[600px] overflow-hidden">
              <img 
-                 src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=1200&auto=format&fit=crop" 
+                 src="https://images.pexels.com/photos/210186/pexels-photo-210186.jpeg" 
                  className="w-full h-full object-cover"
                  alt={destinationLabel}
              />

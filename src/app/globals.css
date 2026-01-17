@@ -96,7 +96,6 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: "ss01", "ss02", "cv01", "cv02";
   }
 }
 
@@ -179,6 +178,10 @@
 
 .animate-slide-up {
   animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+html {
+  font-size: 90%;
 }
 
 /* Smooth Scroll */

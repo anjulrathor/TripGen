@@ -38,12 +38,12 @@ const DestinationCard = ({ city, country, image, rating, type }) => (
 
 export default function DestinationsPage() {
   const destinations = [
-    { city: "Kyoto", country: "Japan", image: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e", rating: 4.9, type: "Cultural" },
-    { city: "Santorini", country: "Greece", image: "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff", rating: 4.8, type: "Romantic" },
-    { city: "Bali", country: "Indonesia", image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4", rating: 4.7, type: "Tropical" },
-    { city: "Amalfi Coast", country: "Italy", image: "https://images.unsplash.com/photo-1633321088390-8d54e0c40333", rating: 4.9, type: "Scenic" },
-    { city: "Reykjavik", country: "Iceland", image: "https://images.unsplash.com/photo-1504109586055-751bd1b30c57", rating: 4.8, type: "Adventure" },
-    { city: "Marrakesh", country: "Morocco", image: "https://images.unsplash.com/photo-1548013146-72479768bbaa", rating: 4.7, type: "Exotic" },
+    { city: "Kyoto", country: "Japan", image: "https://images.pexels.com/photos/1440476/pexels-photo-1440476.jpeg", rating: 4.9, type: "Cultural" },
+    { city: "Santorini", country: "Greece", image: "https://images.pexels.com/photos/1010657/pexels-photo-1010657.jpeg", rating: 4.8, type: "Romantic" },
+    { city: "Bali", country: "Indonesia", image: "https://images.pexels.com/photos/2166559/pexels-photo-2166559.jpeg", rating: 4.7, type: "Tropical" },
+    { city: "Amalfi Coast", country: "Italy", image: "https://images.pexels.com/photos/3563914/pexels-photo-3563914.jpeg", rating: 4.9, type: "Scenic" },
+    { city: "Reykjavik", country: "Iceland", image: "https://images.pexels.com/photos/1009136/pexels-photo-1009136.jpeg", rating: 4.8, type: "Adventure" },
+    { city: "Marrakesh", country: "Morocco", image: "https://images.pexels.com/photos/2261165/pexels-photo-2261165.jpeg", rating: 4.7, type: "Exotic" },
   ];
 
   return (

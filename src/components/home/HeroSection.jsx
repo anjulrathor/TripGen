@@ -16,22 +16,22 @@ import "swiper/css/pagination";
 const HeroSection = () => {
   const slides = [
     {
-      image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
+      image: "https://images.pexels.com/photos/457881/pexels-photo-457881.jpeg",
       title: "Explore the Blue",
       subtitle: "Discover hidden beaches and serene coastal escapes.",
     },
     {
-      image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b",
+      image: "https://images.pexels.com/photos/417074/pexels-photo-417074.jpeg",
       title: "Mountain Peaks",
       subtitle: "Breathing the fresh air of the majestic Himalayas.",
     },
     {
-      image: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e",
+      image: "https://images.pexels.com/photos/775201/pexels-photo-775201.jpeg",
       title: "Forest Retreat",
       subtitle: "Reconnect with nature in lush, green sanctuaries.",
     },
     {
-      image: "https://images.unsplash.com/photo-1493246507139-91e8bef99c4a",
+      image: "https://images.pexels.com/photos/189349/pexels-photo-189349.jpeg",
       title: "Golden Hour",
       subtitle: "Experience the world in its most beautiful light.",
     },
