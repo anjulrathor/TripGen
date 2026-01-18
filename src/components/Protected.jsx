@@ -1,24 +1,25 @@
 "use client";
 import { useEffect, useState } from "react";
 import { auth } from "@/firebase/firebaseConfig";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Shimmer from "./Shimmer";
 
 export default function Protected({ children }) {
   const [checking, setChecking] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     const unsub = auth.onAuthStateChanged((user) => {
       if (!user) {
-        // if not logged in -> redirect to login
-        router.replace("/login");
+        // if not logged in -> redirect to login with return url
+        router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
       } else {
         setChecking(false);
       }
     });
     return () => unsub();
-  }, [router]);
+  }, [router, pathname]);
 
   if (checking) {
     // nice centered shimmer card

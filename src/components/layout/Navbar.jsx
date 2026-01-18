@@ -113,7 +113,6 @@ export default function Navbar() {
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
                       className="absolute right-0 mt-3 w-56 bg-white dark:bg-neutral-900 border border-border rounded-2xl shadow-2xl p-2 z-[60] overflow-hidden"
                     >
-                      {/* ... menu content remains same ... */}
                       <div className="px-3 py-3 border-b border-border/50">
                         <p className="text-sm font-bold truncate">{user.displayName}</p>
                         <p className="text-xs text-muted-foreground truncate">{user.email}</p>
@@ -146,12 +145,16 @@ export default function Navbar() {
                   )}
                 </AnimatePresence>
               </div>
-            ) : null}
+            ) : (
+              <div className="hidden lg:block">
+                  <GoogleLoginButton />
+              </div>
+            )}
 
             {/* Mobile Toggle / Hamburger */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2.5 rounded-xl bg-secondary/80 dark:bg-neutral-800 text-foreground hover:bg-primary hover:text-primary-foreground transition-all duration-300 shadow-sm"
+              className="lg:hidden p-2.5 rounded-xl bg-secondary/80 dark:bg-neutral-800 text-foreground hover:bg-primary hover:text-primary-foreground transition-all duration-300 shadow-sm"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>

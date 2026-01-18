@@ -3,31 +3,35 @@
 import React, { useEffect, useState } from "react";
 import { auth } from "@/firebase/firebaseConfig";
 import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "firebase/auth";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plane, Sparkles, Shield, Rocket, Globe, ArrowRight, Loader2 } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get("redirect") || "/";
+
   const [loading, setLoading] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        router.push("/");
+        router.push(redirectUrl);
       }
       setCheckingAuth(false);
     });
     return () => unsubscribe();
-  }, [router]);
+  }, [router, redirectUrl]);
 
   async function handleGoogleLogin() {
     setLoading(true);
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
-      router.push("/");
+      // router.push handled by onAuthStateChanged listener usually, but just in case:
+      // router.push(redirectUrl); 
     } catch (err) {
       console.error("Login Error:", err);
       setLoading(false);
@@ -46,8 +50,18 @@ export default function LoginPage() {
     <main className="min-h-screen grid lg:grid-cols-2 overflow-hidden bg-background">
       
       {/* Left side: Hero Graphics */}
+      {/* Left side: Hero Graphics */}
       <div className="relative hidden lg:flex flex-col items-center justify-center p-12 bg-secondary/30">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent"></div>
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="https://images.pexels.com/photos/1054218/pexels-photo-1054218.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
+            alt="Background"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"></div>
+        </div>
+        
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent z-0"></div>
         
         <motion.div 
           initial={{ opacity: 0, scale: 0.8 }}
@@ -55,14 +69,14 @@ export default function LoginPage() {
           transition={{ duration: 0.8 }}
           className="relative z-10 w-full max-w-lg"
         >
-          <div className="p-8 rounded-[3rem] bg-white dark:bg-neutral-900 border border-border shadow-2xl">
+          <div className="p-8 rounded-[3rem] bg-white/10 dark:bg-black/40 backdrop-blur-md border border-white/20 shadow-2xl">
             <div className="w-20 h-20 rounded-[1.5rem] bg-primary flex items-center justify-center shadow-lg shadow-primary/20 mb-8 animate-float">
                 <Plane className="w-10 h-10 text-primary-foreground fill-current" />
             </div>
-            <h1 className="text-4xl font-black text-foreground mb-4">
+            <h1 className="text-4xl font-black text-white mb-4">
                Your journey starts with a <span className="text-primary italic">single click.</span>
             </h1>
-            <p className="text-muted-foreground text-lg leading-relaxed mb-8">
+            <p className="text-white/80 text-lg leading-relaxed mb-8">
               Unlock personalized itineraries, save hidden gems, and plan your dream trips with the power of artificial intelligence.
             </p>
             
@@ -72,8 +86,8 @@ export default function LoginPage() {
                     { icon: Shield, text: "Seamless Coordination" },
                     { icon: Globe, text: "Global Destination Insights" }
                 ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-3 font-bold text-foreground">
-                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                    <div key={i} className="flex items-center gap-3 font-bold text-white">
+                        <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary-foreground">
                             <item.icon className="w-5 h-5" />
                         </div>
                         {item.text}
@@ -84,8 +98,8 @@ export default function LoginPage() {
         </motion.div>
 
         {/* Floating background elements */}
-        <div className="absolute top-20 right-20 w-32 h-32 rounded-full bg-primary/10 blur-[50px] animate-pulse"></div>
-        <div className="absolute bottom-20 left-20 w-40 h-40 rounded-full bg-primary/20 blur-[60px] animate-pulse delay-700"></div>
+        <div className="absolute top-20 right-20 w-32 h-32 rounded-full bg-primary/20 blur-[50px] animate-pulse z-0"></div>
+        <div className="absolute bottom-20 left-20 w-40 h-40 rounded-full bg-primary/30 blur-[60px] animate-pulse delay-700 z-0"></div>
       </div>
 
       {/* Right side: Login Form */}
