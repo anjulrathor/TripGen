@@ -71,7 +71,7 @@ export default function Navbar() {
               Trip<span className="text-primary">Gen</span>
             </span>
           </Link>
-
+{/* hello */}
           {/* Desktop Links */}
           <div className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => {
