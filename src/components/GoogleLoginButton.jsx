@@ -9,6 +9,7 @@ import {
   onAuthStateChanged,
 } from "firebase/auth";
 import { LogIn, LogOut, Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function GoogleAuthButton() {
   const [user, setUser] = useState(null);
@@ -68,7 +69,10 @@ export default function GoogleAuthButton() {
   }
 
   return (
-    <button
+    <motion.button
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
       onClick={login}
       disabled={loading}
       className="group relative flex items-center gap-3 px-6 py-3 bg-white dark:bg-neutral-900 border border-border rounded-2xl shadow-lg shadow-black/5 hover:border-primary/50 hover:shadow-primary/10 transition-all active:scale-95 disabled:opacity-50"
@@ -76,10 +80,18 @@ export default function GoogleAuthButton() {
       {loading ? (
         <Loader2 className="w-5 h-5 animate-spin text-primary" />
       ) : (
-        <img
+        <motion.img
+          animate={{ 
+            rotate: [0, 360],
+          }}
+          transition={{
+            duration: 20,
+            repeat: Infinity,
+            ease: "linear"
+          }}
           src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
           alt="Google Logo"
-          className="w-5 h-5 group-hover:scale-110 transition-transform"
+          className="w-5 h-5"
         />
       )}
 
@@ -90,6 +102,6 @@ export default function GoogleAuthButton() {
       {!loading && (
         <div className="absolute inset-0 rounded-2xl bg-primary/0 group-hover:bg-primary/5 transition-colors"></div>
       )}
-    </button>
+    </motion.button>
   );
 }

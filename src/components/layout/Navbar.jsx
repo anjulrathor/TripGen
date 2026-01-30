@@ -73,7 +73,7 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop Links */}
-          <div className="hidden lg:flex items-center gap-1">
+          <div className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => {
               if (link.protected && !user) return null;
               return (
@@ -82,7 +82,9 @@ export default function Navbar() {
                   href={link.href}
                   target={link.external ? "_blank" : "_self"}
                   rel={link.external ? "noopener noreferrer" : ""}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-all duration-200"
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-all duration-200 ${
+                    link.name === "Meet the Developer" ? "hidden lg:flex" : ""
+                  }`}
                 >
                   {link.icon}
                   {link.name}
@@ -146,7 +148,7 @@ export default function Navbar() {
                 </AnimatePresence>
               </div>
             ) : (
-              <div className="hidden lg:block">
+              <div className="hidden md:block">
                   <GoogleLoginButton />
               </div>
             )}
@@ -154,7 +156,7 @@ export default function Navbar() {
             {/* Mobile Toggle / Hamburger */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2.5 rounded-xl bg-secondary/80 dark:bg-neutral-800 text-foreground hover:bg-primary hover:text-primary-foreground transition-all duration-300 shadow-sm"
+              className="md:hidden p-2.5 rounded-xl bg-secondary/80 dark:bg-neutral-800 text-foreground hover:bg-primary hover:text-primary-foreground transition-all duration-300 shadow-sm"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -170,7 +172,7 @@ export default function Navbar() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -20 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed inset-x-4 top-24 z-50 lg:hidden"
+            className="fixed inset-x-4 top-24 z-50 md:hidden"
           >
             <div className="bg-white/95 dark:bg-neutral-900/95 backdrop-blur-2xl border border-white/20 dark:border-white/10 rounded-3xl p-6 shadow-2xl shadow-black/20">
               <div className="flex flex-col gap-1">
